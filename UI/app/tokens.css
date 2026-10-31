@@ -1,0 +1,56 @@
+/* Source of truth: docs/02-Design-System.md §3. Change values there first. */
+:root {
+  /* primitives */
+  --midnight-950: #02070A;  --midnight-900: #08131A;  --midnight-850: #0E1D26;
+  --midnight-700: #1C2E39;  --midnight-500: #557080;  --midnight-300: #7F94A0;
+  --midnight-50:  #E4EDF1;
+  --electric-400: #38B4F0;  --electric-500: #0297DE;  --electric-600: #0281C0;
+  --cantaloupe-400: #FF8E6E; --cantaloupe-500: #FC734D; --cantaloupe-600: #E05F3B;
+  --red-400: #FF6B8B;       --yellow-400: #F2C94C;
+
+  /* semantic */
+  --canvas: var(--midnight-950);
+  --surface: var(--midnight-900);
+  --surface-raised: var(--midnight-850);
+  --border: var(--midnight-700);
+  --border-control: var(--midnight-500);
+  --text: var(--midnight-50);
+  --text-muted: var(--midnight-300);
+  --accent: var(--electric-500);
+  --accent-hover: var(--electric-400);
+  --accent-pressed: var(--electric-600);
+  --on-accent: var(--midnight-950);
+  --focus: var(--electric-400);
+  --confirmed: var(--cantaloupe-500);
+  --confirmed-hover: var(--cantaloupe-400);
+  --confirmed-tint: #1B1211;
+  --on-confirmed: var(--midnight-950);
+  --error: var(--red-400);
+  --warning: var(--yellow-400);
+
+  /* sky: the palette as light. Glow stays ≤50% electric / ≤35% cantaloupe where text sits directly on it. */
+  --sky-electric: rgb(2 151 222);
+  --sky-cantaloupe: rgb(252 115 77);
+  --sky-core: rgb(255 181 156);
+  --text-on-sky: #B4C4CD;                 /* secondary text placed directly on the sky: ≥4.9:1 */
+
+  /* glass: 90% midnight keeps every text token ≥4.5:1 over the hottest glow (measured, design system §3) */
+  --glass: rgb(8 19 26 / 0.9);
+  --glass-raised: rgb(14 29 38 / 0.92);
+  --glass-edge: rgb(228 237 241 / 0.09);
+  --glass-highlight: inset 0 1px 0 rgb(228 237 241 / 0.07);
+  --glass-blur: blur(18px) saturate(140%);
+  --code-bg: rgb(2 7 10 / 0.85);
+  --confirmed-wash: rgb(252 115 77 / 0.1);
+
+  /* type: faces are self-hosted by next/font in app/layout.tsx */
+  --font-display: var(--face-display), Georgia, serif;
+  --font-ui: var(--face-ui), system-ui, sans-serif;
+  --font-code: var(--face-code), ui-monospace, monospace;
+
+  /* radius: outer = inner + inset for nested surfaces (24 = 8 + 16) */
+  --radius-control: 6px;
+  --radius-inner: 8px;
+  --radius-panel: 24px;
+  --radius-pill: 999px;
+}

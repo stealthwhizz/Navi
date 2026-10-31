@@ -1,0 +1,48 @@
+/* Dashboard: one scan at a glance. Everything sits on glass; the sky shows between panels. */
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; }
+.full { grid-column: 1 / -1; }
+.wide { grid-column: span 6; }
+.narrow { grid-column: span 6; }
+
+/* Issue mix: one stacked bar, proportional by status, with a labelled legend (colour is never the only cue). */
+.bar { display: flex; height: 14px; border-radius: var(--radius-pill); overflow: hidden; background: var(--code-bg); border: 1px solid var(--glass-edge); margin: 4px 0 16px; }
+.bar span { min-width: 4px; }
+.segConfirmed { background: var(--confirmed); box-shadow: 0 0 16px rgb(252 115 77 / 0.6); }
+.segCode { background: var(--text-muted); }
+.segRuntime { background: repeating-linear-gradient(135deg, var(--text-muted) 0 4px, transparent 4px 8px); }
+.segSuppressed { background: var(--border-control); opacity: 0.5; }
+.legend { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.legend a { display: grid; gap: 4px; padding: 12px 14px; border-radius: 14px; background: var(--code-bg); border: 1px solid var(--glass-edge); color: var(--text); text-decoration: none; transition: border-color 150ms ease-out; }
+@media (hover: hover) { .legend a:hover { border-color: var(--border-control); color: var(--text); } }
+.legend strong { font-family: var(--font-display); font-weight: 400; font-size: 36px; line-height: 1; }
+.legend .key { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
+.legend .key i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.confirmedValue { color: var(--confirmed); text-shadow: 0 0 18px rgb(252 115 77 / 0.45); }
+
+/* Fix first: the priority order itself, so it is numbered. */
+.queue { list-style: none; margin: 0; padding: 0; counter-reset: rank; }
+.queue li { counter-increment: rank; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 12px 0; border-top: 1px solid var(--glass-edge); }
+.queue li:first-child { border-top: 0; padding-top: 0; }
+.queue li::before { content: counter(rank); font-family: var(--font-display); font-size: 22px; line-height: 1; color: var(--text-muted); }
+.queue .title { display: grid; gap: 4px; min-width: 0; }
+.queue .where { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--font-code); font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+.queue .badges { display: grid; gap: 6px; justify-items: end; }
+
+.matrix td, .matrix th { text-align: right; }
+.matrix td:first-child, .matrix th:first-child { text-align: left; }
+.matrix tbody th { font-weight: 400; font-size: 14px; color: var(--text); padding: 14px 8px; border-top: 1px solid var(--glass-edge); }
+.hot { color: var(--confirmed); font-weight: 600; }
+.zero { color: var(--text-muted); }
+
+.formPanel { scroll-margin-top: 24px; }
+.formPanel > :global(.meta) { margin: 4px 0 12px; }
+.formPanel > details { margin-top: 0; padding-top: 0; border-top: 0; }
+.formPanel > details > summary { display: none; } /* the panel heading already names it */
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 1100px) {
+  .wide, .narrow { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+  .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

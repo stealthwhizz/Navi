@@ -1,0 +1,83 @@
+/* Scan pipeline. Status colours follow the design system: white glow = working, cantaloupe = proven, red = failed.
+   Electric blue stays reserved for things you can click. */
+.root { position: relative; padding: 8px 0 4px; }
+.stages {
+  position: relative; z-index: 1; list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr; grid-template-rows: auto auto;
+  column-gap: clamp(28px, 4vw, 64px); row-gap: 28px; align-items: center;
+}
+.routes { grid-column: 1; grid-row: 1 / span 2; }
+.sast { grid-column: 2; grid-row: 1; }
+.dast { grid-column: 2; grid-row: 2; }
+.correlate { grid-column: 3; grid-row: 1 / span 2; justify-self: center; }
+.dedupe { grid-column: 4; grid-row: 1 / span 2; }
+.report { grid-column: 5; grid-row: 1 / span 2; }
+
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 0; }
+.wire { fill: none; stroke: rgb(228 237 241 / 0.1); stroke-width: 1.5; }
+.wireLit { fill: none; stroke: rgb(228 237 241 / 0.5); stroke-width: 1.75; stroke-linecap: round; filter: drop-shadow(0 0 4px rgb(228 237 241 / 0.35)); }
+.wireProven { stroke: var(--confirmed); filter: drop-shadow(0 0 6px rgb(252 115 77 / 0.7)); }
+.wireFailed { stroke: var(--error); filter: none; }
+/* Work moving along the edge into the stage that is running now. */
+.wireFlow { fill: none; stroke: var(--text); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 15; animation: flow 900ms linear infinite; filter: drop-shadow(0 0 4px rgb(228 237 241 / 0.8)); }
+@keyframes flow { to { stroke-dashoffset: -18; } }
+.particle { fill: var(--text); opacity: 0; filter: drop-shadow(0 0 5px rgb(228 237 241 / 0.9)); }
+
+/* Stage node */
+.node {
+  position: relative; display: grid; gap: 4px; padding: 12px 14px; border-radius: 16px; min-width: 0;
+  background: var(--glass-raised); border: 1px solid var(--glass-edge); box-shadow: var(--glass-highlight);
+  transition-property: border-color, opacity, box-shadow; transition-duration: 300ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+.node::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; box-shadow: 0 0 22px rgb(228 237 241 / 0.35), inset 0 0 0 1px rgb(228 237 241 / 0.55); }
+.node[data-state="waiting"] { opacity: 0.55; }
+.node[data-state="active"]::after { animation: breathe 1600ms cubic-bezier(0.77, 0, 0.175, 1) infinite alternate; }
+.node[data-state="done"] { border-color: var(--border-control); }
+.node[data-state="failed"] { border-color: var(--error); }
+@keyframes breathe { from { opacity: 0.35; } to { opacity: 1; } }
+
+.head { display: flex; align-items: center; gap: 8px; font-weight: 600; min-width: 0; }
+.head > span:last-child { overflow-wrap: anywhere; }
+.status { display: inline-grid; place-items: center; width: 20px; height: 20px; flex: none; border-radius: 50%; border: 1px solid var(--border-control); color: var(--text); }
+.status svg { width: 12px; height: 12px; }
+.node[data-state="active"] .status { border-color: var(--text); }
+.node[data-state="failed"] .status { border-color: var(--error); color: var(--error); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 8px var(--text); }
+.metric { font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+.node[data-state="failed"] .metric { color: var(--error); }
+.lane { justify-self: start; font: 600 11px/1 var(--font-code); color: var(--text-muted); border: 1px solid var(--glass-edge); border-radius: var(--radius-pill); padding: 3px 7px; }
+
+/* Correlation: the stage the product is judged on, so it is the largest and the only one that can turn cantaloupe. */
+.hub { display: grid; justify-items: center; gap: 10px; text-align: center; }
+.orb {
+  position: relative; width: 132px; height: 132px; border-radius: 50%; display: grid; place-items: center; align-content: center; gap: 2px;
+  background: radial-gradient(circle at 50% 35%, rgb(228 237 241 / 0.1), var(--glass) 70%); border: 1px solid var(--border-control);
+  box-shadow: var(--glass-highlight), 0 0 0 10px rgb(228 237 241 / 0.03);
+  transition-property: border-color, box-shadow; transition-duration: 300ms; transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+.orb strong { font-family: var(--font-display); font-weight: 400; font-size: 44px; line-height: 1; }
+.orb span { font-size: 12px; color: var(--text-muted); }
+.hub[data-state="waiting"] .orb { opacity: 0.55; }
+.hub[data-state="active"] .orb { border-color: var(--text); box-shadow: var(--glass-highlight), 0 0 0 10px rgb(228 237 241 / 0.04), 0 0 40px rgb(228 237 241 / 0.25); }
+.hub[data-proven="true"] .orb { border-color: var(--confirmed); box-shadow: var(--glass-highlight), 0 0 0 10px rgb(252 115 77 / 0.08), 0 0 56px rgb(252 115 77 / 0.55); }
+.hub[data-proven="true"] .orb strong { color: var(--confirmed); text-shadow: 0 0 18px rgb(252 115 77 / 0.6); }
+.hub[data-state="failed"] .orb { border-color: var(--error); }
+/* Investigating: a slow orbit around the hub while correlation runs. */
+.orbit { position: absolute; inset: -9px; border-radius: 50%; border: 1px dashed rgb(228 237 241 / 0.55); animation: spin 6s linear infinite; }
+@keyframes spin { to { rotate: 360deg; } }
+.ripple { position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--confirmed); pointer-events: none; }
+.hubLabel { font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wireFlow { animation: none; stroke-dasharray: none; opacity: 0.7; }
+  .node[data-state="active"]::after { animation: none; opacity: 0.8; }
+  .orbit { animation: none; }
+}
+
+@media (max-width: 900px) {
+  .stages { grid-template-columns: 1fr 1fr; grid-template-rows: none; row-gap: 40px; column-gap: 16px; }
+  .routes, .correlate, .dedupe, .report { grid-column: 1 / -1; grid-row: auto; }
+  .sast { grid-column: 1; grid-row: auto; }
+  .dast { grid-column: 2; grid-row: auto; }
+  .routes, .dedupe, .report { justify-self: center; width: min(100%, 320px); }
+}

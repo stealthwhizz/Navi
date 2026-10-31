@@ -1,0 +1,33 @@
+/* Product shell: glass sidebar (brand, scan context, navigation) beside the page. */
+.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: 100dvh; }
+.sidebar {
+  position: sticky; top: 0; height: 100dvh; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 24px; padding: 24px 16px;
+  background: var(--glass); border-right: 1px solid var(--glass-edge);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+}
+.brand { display: inline-flex; align-items: center; gap: 10px; padding: 0 8px; font-size: 18px; font-weight: 600; color: var(--text); text-decoration: none; }
+.brand svg { width: 26px; height: 18px; flex: none; }
+
+.scanBox { display: grid; gap: 8px; padding: 14px; border-radius: 16px; background: var(--code-bg); border: 1px solid var(--glass-edge); }
+.scanBox label { font-size: 12px; color: var(--text-muted); }
+.picker { width: 100%; border-radius: var(--radius-inner); font-size: 13px; padding-inline: 10px; }
+.target { display: grid; grid-template-columns: auto 1fr; gap: 2px 6px; align-items: center; font-size: 12px; color: var(--text-muted); min-width: 0; }
+.target :global(.mono) { grid-column: 1 / -1; color: var(--text); overflow-wrap: anywhere; }
+
+.nav { display: grid; gap: 2px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; color: var(--text-muted); text-decoration: none; transition: background-color 150ms ease-out, color 150ms ease-out; }
+.nav a[aria-current="page"] { color: var(--text); background: rgb(2 151 222 / 0.14); box-shadow: inset 2px 0 var(--accent-hover); }
+@media (hover: hover) { .nav a:hover { color: var(--text); background: rgb(228 237 241 / 0.05); } }
+.count { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+.countConfirmed { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--confirmed); }
+
+.foot { margin-top: auto; display: grid; gap: 8px; }
+.main { min-width: 0; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--glass-edge); gap: 16px; padding: 16px; }
+  .nav { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
+  .foot { margin-top: 0; }
+}

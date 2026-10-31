@@ -1,0 +1,57 @@
+.head { display: grid; gap: 14px; margin-bottom: 32px; }
+.head dt { color: var(--text-on-sky); } /* the issue head sits directly on the sky */
+.row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.whereGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 0; }
+.whereGrid > div { display: grid; gap: 6px; align-content: start; padding: 14px 16px; border-radius: 14px; background: var(--code-bg); border: 1px solid var(--glass-edge); min-width: 0; }
+.whereGrid dt { font-size: 12px; color: var(--text-muted); }
+.whereGrid dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Correlation chain: the one expressive surface (design system §2). Cantaloupe only when the link is accepted. */
+.chain { display: flex; flex-wrap: wrap; align-items: center; row-gap: 8px; list-style: none; margin: 0; padding: 0; }
+.chain li { display: flex; align-items: center; }
+.chain li + li::before { content: ""; width: 24px; height: 0; border-top: 2px solid var(--confirmed); }
+.chain li.open::before, .chain li.open ~ li::before { border-top-style: dashed; border-top-color: var(--border-control); }
+.unproven li + li::before { border-top-color: var(--border-control); }
+.node { display: grid; gap: 2px; padding: 8px 14px; border-radius: 14px; border: 1px solid var(--confirmed); color: var(--confirmed); max-width: 320px; background: rgb(252 115 77 / 0.06); box-shadow: 0 0 16px rgb(252 115 77 / 0.18); }
+.node :global(.meta) { color: inherit; }
+.unproven .node { border-color: var(--border-control); color: var(--text); background: transparent; box-shadow: none; }
+.unproven .unknown, .unknown { border: 1px dashed var(--border-control); color: var(--text-muted); background: transparent; box-shadow: none; }
+.status { background: var(--confirmed); color: var(--on-confirmed); font-weight: 600; box-shadow: 0 0 24px rgb(252 115 77 / 0.45); }
+.unproven .status { background: transparent; color: var(--text); box-shadow: none; }
+.rationale { margin-top: 12px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.grid > section { min-width: 0; }
+.grid dl { margin-bottom: 16px; }
+.block + .block { margin-top: 16px; }
+.block > div:first-child { margin-bottom: 8px; }
+
+.code {
+  margin: 0; padding: 12px 0; background: var(--code-bg); border: 1px solid var(--glass-edge); border-radius: var(--radius-inner);
+  font: 400 14px/1.6 var(--font-code); overflow: auto; max-height: 420px; overscroll-behavior: contain;
+}
+.ln { display: grid; grid-template-columns: 4ch 1fr; gap: 16px; padding: 0 12px; }
+.ln > span:first-child { color: var(--text-muted); text-align: right; user-select: none; }
+.ln > span:last-child { white-space: pre-wrap; overflow-wrap: anywhere; }
+.hl { background: rgb(228 237 241 / 0.06); box-shadow: inset 3px 0 var(--text-muted); }
+.raw { padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.code mark { background: rgb(228 237 241 / 0.08); color: var(--text); font-weight: 600; outline: 1px solid var(--border-control); border-radius: 2px; }
+.confirmedIssue .hl { background: var(--confirmed-wash); box-shadow: inset 3px 0 var(--confirmed); }
+.confirmedIssue .code mark { background: var(--confirmed-wash); color: var(--confirmed); outline-color: var(--confirmed); }
+
+.flow { list-style: none; margin: 0; padding: 0; }
+.flow li { display: grid; grid-template-columns: 16px 1fr; gap: 12px; padding-bottom: 12px; position: relative; }
+.flow li::before { content: ""; width: 10px; height: 10px; margin: 5px 3px 0; border-radius: 50%; background: var(--text); }
+.flow li:not(:last-child)::after { content: ""; position: absolute; left: 7px; top: 18px; bottom: 0; border-left: 2px solid var(--border-control); }
+.flow li.unresolved::before { background: transparent; border: 2px dashed var(--warning); }
+.flow li.unresolved:not(:last-child)::after { border-left-style: dashed; }
+
+@media (max-width: 960px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .chain, .chain li { flex-direction: column; align-items: flex-start; }
+  .chain li + li::before { width: 0; height: 12px; margin-left: 16px; border-top: 0; border-left: 2px solid var(--confirmed); }
+  .chain li.open::before, .chain li.open ~ li::before { border-left-style: dashed; border-left-color: var(--border-control); }
+  .unproven li + li::before { border-left-color: var(--border-control); }
+}
