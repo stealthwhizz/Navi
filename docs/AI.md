@@ -12,6 +12,8 @@ Enable AI with `--ai` or a project created using `init --ai`. Navi loads `GROQ_A
 
 Every issue has `reasoning.native`; reviewed issues also have `reasoning.ai`. The CLI and supplied UI display these together. An omitted or rejected AI review never removes a finding. Prompt limits can leave some findings unreviewed; the review count is shown explicitly.
 
+AI context includes each issue's `source_link.policy` and `source_link.basis`. Reviews must distinguish PRD matching from strict execution attribution and cannot claim that absent optional traces or build evidence passed.
+
 AI cannot overwrite native verification, merge ambiguous operations, waive a deployment mismatch, prove unreachability from missing call edges, or declare reproduced runtime behavior safe. Responses must satisfy strict schemas and cite supplied issue, evidence, candidate, and source references. A suggested source location remains an investigation lead when the native cause is unresolved.
 
 ## Budgets and failures

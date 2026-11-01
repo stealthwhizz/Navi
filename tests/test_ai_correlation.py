@@ -53,12 +53,13 @@ def test_one_call_reconciles_signals_noise_fix_locations_and_priority(shop, tmp_
     assert report['ai']['request_limit'] == 5 and report['ai']['status'] == 'completed'
     assert report['ai']['stages']['source_review']['status'] == 'skipped'
     worklist = report['worklist']; items = worklist['items']
-    assert len(items) == len({i['issue_id'] for i in items}) == report['summary']['total'] == 9
-    assert worklist['summary']['source_runtime_pairs'] == 0
-    assert worklist['summary']['combined_signals'] == 0
-    assert worklist['summary']['possible_noise'] == 5  # visible hypotheses, never removed
-    assert sum(i['priority'] == 'P2' for i in items) == 4
-    assert sum(i['priority'] == 'P3' for i in items) == 5
+    assert len(items) == len({i['issue_id'] for i in items}) == report['summary']['total'] == 6
+    assert worklist['summary']['source_runtime_pairs'] == 3
+    assert worklist['summary']['combined_signals'] == 3
+    assert worklist['summary']['possible_noise'] == 2  # visible hypotheses, never removed
+    assert sum(i['priority'] == 'P2' for i in items) == 1
+    assert sum(i['priority'] == 'P3' for i in items) == 2
+    assert sum(i['priority'] == 'P1' for i in items) == 3
     assert all(i['ai_priority_hint'] == 'normal' for i in items if i['priority'] in {'P1', 'P2'})
     assert all(i['signals_combined'] == 2 for i in items if i['priority'] == 'P1')
     runtime = next(i for i in items if i['status'] == 'Runtime only')
@@ -66,7 +67,7 @@ def test_one_call_reconciles_signals_noise_fix_locations_and_priority(shop, tmp_
     assert not report['ai']['fixes']
     assert all(i['reasoning']['native'] for i in report['issues'])
     assert runtime['reasoning']['ai']
-    assert len(json.loads((tmp_path / 'report.json').read_text())['worklist']['items']) == 9
+    assert len(json.loads((tmp_path / 'report.json').read_text())['worklist']['items']) == 6
     assert 'Prioritized issue queue' in (tmp_path / 'report.html').read_text()
 
 
@@ -100,7 +101,7 @@ def test_stage_cannot_be_retried_or_exceed_smaller_scan_budget(shop, tmp_path, m
     report = scan(ROOT / 'examples/shop', 'http://127.0.0.1:5050', config, tmp_path, browser=False)
     assert model.stages == ['CorrelationReview']
     assert report['ai']['stages']['remediation']['status'] == 'skipped'
-    assert report['summary']['confirmed'] == 0 and report['summary']['probable_source_links'] == 3
+    assert report['summary']['confirmed'] == 3 and report['summary']['probable_source_links'] == 0
     session = AISession({'ai': {'enabled': True}}, ScanControl(), client=model)
     session.call('coverage', {'gaps': []})
     attempts = session.report['call_attempts']
@@ -121,7 +122,7 @@ def test_verified_noise_dismissal_and_unrelated_fix_targets_are_rejected(shop, t
     model = Hostile(); install_model(monkeypatch, model)
     config = load_config(str(ROOT / 'examples/shop/policy.json')); config['ai'] = {'enabled': True}
     result = scan(ROOT / 'examples/shop', 'http://127.0.0.1:5050', config, tmp_path, browser=False)
-    assert result['summary']['confirmed'] == 0 and len(result['worklist']['items']) == 9
+    assert result['summary']['confirmed'] == 3 and len(result['worklist']['items']) == 6
     reasons = ' '.join(r['reason'] for r in result['ai']['rejected'])
     assert 'verified runtime finding' in reasons and 'Fix target' in reasons
     assert all(i['noise_assessment'] != 'possible_false_positive' for i in result['worklist']['items'] if i['priority'] in {'P1', 'P2'})

@@ -16,7 +16,7 @@ Navi brings those findings into a common CWE-based model, maps routes and inputs
 |---|---|
 | **FR-1, FR-2 — Scan code and the running app** | Source findings include file, line, snippet, CWE, and severity. Runtime findings preserve the URL, method, parameter, payload, and observations. |
 | **FR-3, FR-4 — Common format and route map** | A shared finding schema and bounded source adapters map supported routes, handlers, inputs, and data flow. |
-| **FR-5, FR-6 — Correlate and merge duplicates** | The correlation engine checks CWE, exact input bindings, modeled flow, signed execution traces, and deployment identity before merging a source/runtime pair. Stable fingerprints identify recurring findings across scans. |
+| **FR-5, FR-6 — Correlate and merge duplicates** | The default PRD policy merges native runtime proof with one source-derived candidate matching CWE, route, method, input location, and parameter. Optional strict policy also requires complete flow, signed traces, and deployment identity. Stable fingerprints identify recurring findings across scans. |
 | **FR-7, FR-8 — Labels and actionable details** | Reports retain Confirmed, Code only, and Runtime only issue labels, with separate source-link states and the evidence explaining each decision. Provisional source candidates remain separate. |
 | **FR-9, FR-10 — Prioritize and present** | Confirmed issues appear first, followed by descending heuristic risk. The CLI, dashboard, and exported reports expose evidence and fix guidance. |
 
@@ -29,7 +29,7 @@ The PRD's **reachability-aware SCA** bonus is not implemented: Navi does not gen
 - **Static application security testing (SAST):** tracks request inputs into sensitive operations, with source locations, modeled protections, helper/service propagation, and bounded data-flow graphs.
 - **Dynamic application security testing (DAST):** discovers forms and links or imports local OpenAPI inputs, then runs native verification probes against the configured target.
 - **Authenticated workflows:** supports login/cookies, fresh form and CSRF controls, request seeds, object creation, ID/token extraction, and cleanup.
-- **Source attribution:** connects runtime evidence to source operations using exact input bindings, modeled flow, signed operation/input traces, and deployment identity.
+- **Source attribution:** connects verified runtime evidence to a unique source operation using CWE and exact route/input bindings. Strict mode adds complete modeled flow, signed operation/input traces, and deployment identity.
 - **Reports and triage:** preserves payloads, controls, source snippets, confidence checks, severity, stable IDs, scan history, and JSON, HTML, text, and SARIF exports.
 - **Optional AI review:** Groq or OpenAI can explain existing findings and suggest investigation steps. Model output cannot establish runtime proof or force a source link.
 
@@ -99,16 +99,18 @@ Runtime verification and source attribution are separate:
 
 | Source-link state | Meaning |
 |---|---|
-| **Confirmed source link** | Native runtime proof, a complete modeled input-to-sink path, signed exact operation/input traces, and matching deployment identity. Source and runtime findings merge into a Confirmed issue. |
-| **Probable source link** | Runtime behavior is verified and a source candidate exists, but attribution evidence is incomplete. Source and runtime findings remain separate. |
+| **Confirmed source link** | Under the default PRD policy: native runtime proof and one source-derived candidate matching CWE, route, method, input location, and parameter. The pair merges into one Confirmed issue with code and runtime evidence. |
+| **Probable source link** | Runtime behavior is verified and a unique source candidate exists, but an explicitly required check or a strict-policy requirement is incomplete. Source and runtime findings remain separate. |
 | **Runtime only** | No supported source cause was established. Check `verification`: an ordinary HTTP template match is not verified exploitability. |
 | **Code only** | A source candidate has no confirmed source/runtime association. |
 
-Navi's confirmation policy is stricter than the PRD's route/CWE matching baseline in FR-5 and FR-7. Signed operation/input traces and matching deployment identity are required in addition to modeled flow and native runtime proof. On an uninstrumented judging target, real runtime vulnerabilities can remain separate from their source candidates and will not count as Confirmed pairs.
+The default **`prd`** correlation policy implements FR-5/FR-7 without requiring changes to the target application. It still rejects ambiguous matches, operator-only mappings, unverified template matches, and contradictory trace/build evidence. Reports record the policy and matching basis; missing optional checks remain unknown. If you explicitly configure build matching or required tracing, those checks must pass.
+
+Use **`--correlation-policy strict`** or `"correlation": {"policy": "strict"}` in your scan config to require complete modeled flow, signed exact operation/input traces, and matching deployment identity as well. Existing saved reports retain their original results; rerun the scan to use the new default.
 
 Optional [Laravel tracing middleware](navi/integrations/laravel/NaviTrace.php) is included. It requires integration at the actual sensitive operations; it does not automatically instrument an application. See [accuracy and tracing setup](docs/ACCURACY.md).
 
-For CI, `--fail-on-verified-high` exits with failure on high/critical verified runtime findings. `--fail-on-confirmed-high` uses the stricter source-link requirement. An unobserved finding on a later scan is not proof of a fix.
+For CI, `--fail-on-verified-high` exits with failure on high/critical verified runtime findings. `--fail-on-confirmed-high` follows the selected correlation policy. An unobserved finding on a later scan is not proof of a fix.
 
 ## Dashboard and storage
 
@@ -154,7 +156,7 @@ python -m pip install -e '.[test]'
 python -m pytest -ra
 ```
 
-Browser, live HTTP, PHP SQLite, and PostgreSQL checks need their respective prerequisites. Historical validation: **555 passed, 14 skipped** on the available host; see [current validation details](VALIDATION.md). The small reviewed DVWA source sample found four vulnerable operations and reported none of four protected controls. These results do not establish accuracy on unseen applications.
+Browser, live HTTP, PHP SQLite, and PostgreSQL checks need their respective prerequisites. Current engine validation: **586 passed, 14 skipped** on the available host; see [current validation details](VALIDATION.md). The small reviewed DVWA source sample found four vulnerable operations and reported none of four protected controls. These results do not establish accuracy on unseen applications.
 
 The checked-in Next.js 16 dependency set has not been validated locally. The recorded frontend build used a cached compatibility toolchain; see [frontend validation](VALIDATION.md#frontend-and-packaging).
 

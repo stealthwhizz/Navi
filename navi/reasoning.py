@@ -24,7 +24,14 @@ def explain(issue, report, review=None):
     elif issue['verification'] == 'verified':
         native = PROOFS.get(issue['cwe'], 'The native runtime verifier reproduced the weakness.')
         if issue['status'] == 'Confirmed':
-            native += ' A modeled input-to-sink path and signed operation/input traces identify the source operation on the matching deployed build.'
+            link = issue.get('source_link', {})
+            if link.get('basis') == 'PRD route and input match':
+                native += ' Confirmed under PRD correlation: one source-derived candidate matches the CWE, route, method, input location and parameter.'
+                if not any(c['name'] == 'Runtime trace' and c['result'] == 'pass'
+                           for c in issue.get('correlation_checks', [])):
+                    native += ' Signed execution attribution is unavailable.'
+            else:
+                native += ' A modeled input-to-sink path and signed operation/input traces identify the source operation on the matching deployed build.'
             if issue.get('deployment_identity', report.get('build', {}).get('status')) != 'matched':
                 native += ' Deployment identity is unverified.'
         elif issue.get('source_link', {}).get('status') == 'Probable source link':

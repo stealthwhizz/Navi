@@ -93,8 +93,8 @@ def test_mapping_is_supplemental_and_cannot_confirm_a_hypothesis(tmp_path):
     assert not any(i['status'] == 'Confirmed' for i in issues)
     assert next(i for i in issues if i['id'] == 'proof')['candidate_source_ids']
     runtime.bindings[0].route = '/one.php'
-    assert not any(i['status'] == 'Confirmed' for i in correlate(result, [runtime], {'status': 'matched'}))
-    assert any(i['source_link']['status'] == 'Probable source link' for i in correlate(result, [runtime], {'status': 'matched'}))
+    assert any(i['status'] == 'Confirmed' for i in correlate(result, [runtime], {'status': 'matched'}))
+    assert not any(i['status'] == 'Confirmed' for i in correlate(result, [runtime], {'status': 'matched'}, policy='strict'))
 
 
 def test_shared_helper_deduplicates_but_distinct_operations_remain_ambiguous(tmp_path):

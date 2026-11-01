@@ -96,11 +96,10 @@ def test_controller_to_runtime_proof_report_and_repeat_identity(laravel, tmp_pat
         transport = ControllerTransport(bridge, root / 'app/Http/Controllers/CheckController.php')
         report = scan(root, transport.target, config, tmp_path / 'reports/scans' / str(number), browser=browser, transport=transport)
         issues = [i for i in report['issues'] if i['cwe'] == cwe and i['verification'] == 'verified']
-        assert len(issues) == 1 and issues[0]['source_link']['status'] == 'Probable source link'
+        assert len(issues) == 1 and issues[0]['source_link']['status'] == 'Confirmed source link'
         issue = issues[0]
-        candidate = next(i for i in report['issues'] if i['id'] in issue['candidate_source_ids'])
-        assert candidate['source']['line'] == 9 and candidate['source']['snippet']
-        assert candidate['source']['file'] == 'app/Http/Controllers/CheckController.php'
+        assert issue['source']['line'] == 9 and issue['source']['snippet']
+        assert issue['source']['file'] == 'app/Http/Controllers/CheckController.php'
         assert issue['runtime'] and any(o['payload'] is not None for o in issue['runtime'])
         assert all(o['url'].startswith(transport.target) and o['method'] == 'GET' for o in issue['runtime'])
         assert any(c['name'] == 'Source flow' and c['result'] == 'pass' for c in issue['correlation_checks'])

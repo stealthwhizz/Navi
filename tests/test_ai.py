@@ -253,7 +253,7 @@ def test_model_cannot_invent_correlations_patches_or_gap_ids(shop, tmp_path, mon
     monkeypatch.setattr(OpenAIClient, 'complete', lambda self, m, c: model.complete(m, c))
     config = load_config(str(ROOT / 'examples/shop/policy.json')); config['ai'] = {'enabled': True, 'workflow': 'full'}
     result = scan(ROOT / 'examples/shop', 'http://127.0.0.1:5050', config, tmp_path, browser=False)
-    assert result['summary']['confirmed'] == 0 and result['summary']['probable_source_links'] == 3
+    assert result['summary']['confirmed'] == 3 and result['summary']['probable_source_links'] == 0
     assert not result['ai']['correlation_reviews'] and not result['ai']['fixes'] and not result['ai']['coverage_priorities']
     assert {r['stage'] for r in result['ai']['rejected']} >= {'correlation', 'remediation', 'coverage'}
 
@@ -280,7 +280,7 @@ def test_api_ai_results_are_protected_and_saved_with_scan(synthetic, shop, tmp_p
         result = client.get('/api/ai', headers=headers)
         assert result.status_code == 200 and result.json()['status'] == 'completed'
         worklist = client.get('/api/worklist', headers=headers)
-        assert worklist.status_code == 200 and worklist.json()['summary']['source_runtime_pairs'] == 0
+        assert worklist.status_code == 200 and worklist.json()['summary']['source_runtime_pairs'] == 3
         assert key not in worklist.text
         assert key not in state.text and key not in result.text
         assert 'AI review' in client.get('/api/report.html', headers=headers).text

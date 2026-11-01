@@ -14,7 +14,7 @@ def build_worklist(report):
         verified = issue['verification'] == 'verified'
         tier = 0 if verified and issue['status'] == 'Confirmed' else 1 if verified else 2
         reasons = [
-            'Runtime behavior reproduced and linked to one supported source operation; see the deployment identity check.',
+            'Runtime behavior reproduced and linked to one source candidate under the recorded correlation policy.',
             'Runtime behavior reproduced; the source cause still needs investigation.',
             'Source candidate without runtime verification; confirm exploitability before treating it as proven.',
         ]

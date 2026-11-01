@@ -82,8 +82,9 @@ def test_live_scan_prints_scanner_evidence_in_order_without_repeating_phases(sho
     assert output.index('S002 |') < offsets[1]
     assert 'D001 | high | CWE-89' in output and offsets[1] < output.index('D001 |') < offsets[2]
     assert 'Payload:' in output and 'Evidence:' in output
-    assert 'Probable source link' in output and '0 Confirmed' in output
-    assert 'exact attribution remains provisional' in output
+    assert 'Correlation policy: prd' in output and '3 Confirmed' in output
+    assert 'Confirmed under PRD correlation' in output
+    assert 'the source link remains provisional' not in output
     assert output.count('Reasoning:') == len(report['issues'])
     assert 'AI analysis: disabled' in output
     # Portable reports retain all routes, including those omitted from the terminal preview.

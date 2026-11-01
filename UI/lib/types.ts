@@ -93,7 +93,7 @@ export interface RuntimeObservation {
 }
 
 export interface Correlation {
-  source_link?: {status: string; operation_id: string | null; missing_evidence: string[]} | null;
+  source_link?: {status: string; operation_id: string | null; missing_evidence: string[]; policy?: 'prd' | 'strict'; basis?: string | null} | null;
   evidence_graph?: {source_flows: {operation_id: string; complete: boolean; nodes: {id: string; kind: string; file?: string; line?: number; label?: string; route?: string; method?: string; parameter?: string}[]}[]} | null;
   accepted: boolean;
   rationale: string;

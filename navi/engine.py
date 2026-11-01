@@ -11,7 +11,7 @@ import uuid
 
 from .control import ScanControl, ScanStopped
 from .ai import AISession
-from .correlate import correlate
+from .correlate import correlate, options as correlation_options
 from .model import SCHEMA_VERSION, fingerprint, gap, no_source_analysis
 from .report import write_reports
 from .runtime import Runtime
@@ -29,6 +29,7 @@ def scan(source: str | Path | None, target: str | None, config: dict | None = No
     source_path = str(Path(source).resolve()) if source else None
     from .runtime import validate_scan_options
     validate_scan_options(config)
+    correlation = correlation_options(config.get('correlation'))
     control = control or ScanControl(config.get("limits", {}).get("max_seconds", 300))
     stopped = None
     output = Path(output)
@@ -46,7 +47,8 @@ def scan(source: str | Path | None, target: str | None, config: dict | None = No
             if callback:
                 callback(event)
         configuration = {"session_configured": bool(config.get("session")), "allowed_methods": config.get("allowed_methods", ["GET"]),
-                         "php_route_mappings": len(config.get("php_routes", [])), "request_seeds": len(config.get("requests", {}))}
+                         "php_route_mappings": len(config.get("php_routes", [])), "request_seeds": len(config.get("requests", {})),
+                         "correlation_policy": correlation['policy']}
         emit("scan_started", {"source": source_path, "target": target, "configuration": configuration})
         analysis = analyze(source, config, control=control) if source else no_source_analysis()
         template_manifests = dict(analysis.templates)
@@ -116,7 +118,7 @@ def scan(source: str | Path | None, target: str | None, config: dict | None = No
         from .tracing import options as trace_options
         tracing = trace_options(config.get('trace'))
         issues = correlate(analysis, runtime_findings, build, require_build_match=bool(config.get('build')),
-                           trace_required=tracing['enabled'] and tracing['required'])
+                           trace_required=tracing['enabled'] and tracing['required'], policy=correlation['policy'])
         for issue in issues:
             emit("issue", issue)
         coverage = {"supported_static": ["CWE-89", "CWE-79", "CWE-22", "CWE-601", "CWE-798", "CWE-78"],
@@ -143,7 +145,7 @@ def scan(source: str | Path | None, target: str | None, config: dict | None = No
                   "function_map": analysis.function_map,
                   "findings": [f.to_dict() for f in [*analysis.findings, *runtime_findings]], "issues": issues,
                   "checks": checks, "coverage": coverage, "http_requests": requests, "discovery": discovered,
-                  "templates": template_manifests, "tracing": trace_summary,
+                  "templates": template_manifests, "tracing": trace_summary, "correlation": correlation,
                   "summary": {"total": len(issues), "confirmed": sum(i["status"] == "Confirmed" for i in issues),
                               "code_only": sum(i["status"] == "Code only" for i in issues), "runtime_only": sum(i["status"] == "Runtime only" for i in issues),
                               "verified": sum(i["verification"] == "verified" for i in issues), "coverage_gaps": len(gaps),

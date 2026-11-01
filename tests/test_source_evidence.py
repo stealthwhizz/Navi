@@ -1,6 +1,7 @@
-"""Source attribution regressions; these are local fixtures, not unseen accuracy scores."""
+"""Strict source attribution regressions; local fixtures, not unseen accuracy scores."""
 import base64
 from copy import deepcopy
+from functools import partial
 import hashlib
 import hmac
 import json
@@ -8,10 +9,12 @@ import runpy
 
 import pytest
 
-from navi.correlate import correlate
+from navi.correlate import correlate as correlate_with_policy
 from navi.engine import scan
 from navi.model import Finding
 from navi.static import analyze
+
+correlate = partial(correlate_with_policy, policy='strict')
 from navi.tracing import verify
 
 KEY = b'synthetic-test-key-with-at-least-32-bytes'
@@ -194,7 +197,7 @@ def products():
         return response
     connect_app(app)
     monkeypatch.setenv('NAVI_TRACE_KEY', KEY.decode())
-    report = scan(root, 'http://127.0.0.1', {'interval': 0, 'trace': {'enabled': True}, 'build': {'path': '/build'},
+    report = scan(root, 'http://127.0.0.1', {'interval': 0, 'correlation': {'policy': 'strict'}, 'trace': {'enabled': True}, 'build': {'path': '/build'},
                   'ai': {'enabled': False}, 'discovery': {'enabled': False}}, tmp_path / 'reports', browser=False)
     issue = next(i for i in report['issues'] if i['status'] == 'Confirmed')
     assert issue['source_link']['status'] == 'Confirmed source link'

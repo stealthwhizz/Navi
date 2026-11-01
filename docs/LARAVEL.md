@@ -23,7 +23,7 @@ Navi detects conventional `routes/` plus `app/Http/Controllers/`, or a Composer 
 - HTML controller returns/responses and direct view-variable flows into Blade. Escaped text and quoted attributes are distinguished from raw output, unquoted attributes and script contexts. JSON/plain-text responses are not HTML XSS sinks.
 - Redirect helper/facade destinations. Fixed local prefixes and named route generation are distinguished from user-controlled external destinations.
 
-The adapter records original file/line/snippet locations, including Blade output locations, with source-derived route bindings. Unresolved controller registrations retain source-only candidates without invented URLs. A Confirmed source link requires a modeled value-flow graph, authenticated operation/input traces, and matching deployed source identity; see [accuracy setup](ACCURACY.md).
+The adapter records original file/line/snippet locations, including Blade output locations, with source-derived route bindings. Unresolved controller registrations retain source-only candidates without invented URLs. The default PRD policy confirms native runtime proof matched to one source-derived candidate with the same CWE, route, method, input location, and parameter. Optional strict policy also requires a complete modeled value-flow graph, authenticated operation/input traces, and matching deployed source identity; see [accuracy setup](ACCURACY.md).
 
 `routes/api.php` uses the conventional `/api` prefix. If your application changes it, configure:
 

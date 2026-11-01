@@ -39,17 +39,21 @@ def test_full_finding_contract_without_target_instrumentation_and_repeat_dedup(o
     second = scan(order_app, 'http://127.0.0.1:8234', config, tmp_path / 'reports/scans/second', browser=False)
     assert first['build']['status'] == 'unverified'
     issue = next(i for i in first['issues'] if i['cwe'] == 'CWE-89')
-    assert issue['status'] == 'Runtime only' and issue['source_link']['status'] == 'Probable source link'
-    assert len(issue['findings']) == 1 and issue['evidence'] and issue['fix']
+    assert issue['status'] == 'Confirmed' and issue['source_link']['status'] == 'Confirmed source link'
+    assert issue['source_link']['policy'] == 'prd' and first['correlation']['policy'] == 'prd'
+    assert len(issue['findings']) == 2 and issue['evidence'] and issue['fix']
     assert 'Deployment identity is unverified' in issue['reasoning']['native']
-    candidate = next(i for i in first['issues'] if i['id'] in issue['candidate_source_ids'])
-    assert candidate['source']['file'] == 'orders.py' and candidate['source']['line'] == 10
-    assert 'db.execute' in candidate['source']['snippet']
+    assert issue['source']['file'] == 'orders.py' and issue['source']['line'] == 10
+    assert 'db.execute' in issue['source']['snippet']
     assert issue['severity'] == 'high' and issue['risk_score'] == 9.0
-    assert len(issue['correlation_checks']) == 4
+    assert len(issue['correlation_checks']) == 8
+    for name in ('Runtime trace', 'Deployment identity'):
+        check = next(c for c in issue['correlation_checks'] if c['name'] == name)
+        assert check['result'] == 'unknown' and not check['required']
+    assert {edge['kind'] for edge in issue['evidence_graph']['edges']} == {'prd_input_correlation'}
     assert issue['evidence_graph']['source_flows'][0]['binding'] == {
         'route': '/api/orders', 'method': 'GET', 'location': 'query', 'parameter': 'id'}
-    signals = [f for f in first['findings'] if f['id'] in issue['findings'] + candidate['findings']]
+    signals = [f for f in first['findings'] if f['id'] in issue['findings']]
     assert {f['origin'] for f in signals} == {'sast', 'dast'}
     assert signals[0].keys() == signals[1].keys()
     assert all(f['fingerprint'] == f['id'] and f['cwe'] == 'CWE-89' for f in signals)
@@ -60,8 +64,8 @@ def test_full_finding_contract_without_target_instrumentation_and_repeat_dedup(o
     assert view['dast']['url'].startswith('http://127.0.0.1:8234/api/orders')
     assert 'AND' in view['dast']['payload']
     assert view['dast']['payload'] == json.loads(view['dast']['request'])['tested_input']['value']
-    assert view['sast'] is None and view['fix'] and view['reasoning']['ai_status'] == 'disabled'
-    assert issue_view(candidate, first)['sast']['snippet']['code']
+    assert view['sast']['snippet']['code'] and view['fix'] and view['reasoning']['ai_status'] == 'disabled'
+    assert view['correlation']['accepted'] and view['correlation']['source_link']['policy'] == 'prd'
     route = next(r for r in routes_view(first) if r['path'] == '/api/orders')
     assert route['handler'] == {'name': 'get_orders', 'file': 'orders.py', 'line_start': 5, 'line_end': 12}
     assert route['params'] == ['id']
@@ -124,8 +128,8 @@ def test_ai_analysis_reaches_frontend_with_native_link_intact(order_app, tmp_pat
     assert report['ai']['call_attempts'] == 1
     assert view['reasoning']['ai'] and view['reasoning']['ai_status'] == 'reviewed'
     assert view['reasoning']['ai_provider'] == 'groq' and view['reasoning']['ai_model'] == 'openai/gpt-oss-20b'
-    assert view['status'] == 'runtime_only' and not view['correlation']['accepted']
-    assert view['correlation']['source_link']['status'] == 'Probable source link'
+    assert view['status'] == 'confirmed' and view['correlation']['accepted']
+    assert view['correlation']['source_link']['status'] == 'Confirmed source link'
 
 
 def test_priority_is_confirmed_first_then_risk_even_for_unverified_critical_code():

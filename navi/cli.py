@@ -22,6 +22,7 @@ def main(argv=None):
     commands = parser.add_subparsers(dest="command", required=True)
 
     def storage(p):
+        p.add_argument('--correlation-policy', choices=['prd', 'strict'], help='Source/runtime matching: prd by default; strict also requires complete flow, signed traces and matching build identity')
         p.add_argument('--scanner', choices=['templates', 'native'], help='Native scanner mode; new CLI scans default to local templates')
         p.add_argument('--sast-rules', action='append', help='Local Semgrep-style PHP taint YAML interpreted by Navi (repeatable)')
         p.add_argument('--dast-templates', action='append', help='Local Nuclei-style HTTP YAML interpreted by Navi (repeatable)')

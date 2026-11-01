@@ -47,6 +47,8 @@ def portable_html(report: dict) -> str:
         source = issue.get('source')
         code = f"<pre>{esc(source['file'])}:{esc(source['line'])}\n{esc(source.get('snippet', ''))}</pre>" if source else ''
         links = '<p><strong>Source attribution:</strong> ' + esc(issue.get('source_link', {}).get('status', issue['status'])) + '</p><details><summary>Source-link evidence</summary><ul>' + ''.join('<li>' + esc(r) + '</li>' for r in issue.get('link_reasons', [])) + '</ul></details>'
+        if issue.get('source_link', {}).get('policy'):
+            links = '<p><strong>Correlation policy:</strong> ' + esc(issue['source_link']['policy']) + '</p>' + links
         priority = issue.get('triage', {}).get('priority', '')
         cards.append(f"<article><h2>{esc(issue['title'])} <small>{esc(priority)} · {esc(issue['cwe'])} · {esc(issue['status'])} · {esc(issue['severity'])} · Risk {esc(issue['risk_score'])}/10</small></h2><p>{esc(' | '.join(where))}</p>{code}{runtime}<p><strong>Reasoning:</strong> {esc(reasoning['native'])}</p>{advice}{links}<p><strong>Suggested fix:</strong> {esc(issue['fix'])}</p><details><summary>All evidence and controls ({len(observations)})</summary><pre>{esc(json.dumps(issue, indent=2))}</pre></details></article>")
     from .console import sections

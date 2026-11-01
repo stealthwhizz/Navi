@@ -42,9 +42,10 @@ def main():
         verified = {i["cwe"] for i in report["issues"] if i["verification"] == "verified"}
         assert expected <= verified, report["coverage"]["gaps"]
         # This fixture has a build endpoint but no operation/input instrumentation.
-        # Native runtime proof must survive without creating Confirmed source links.
-        assert not any(i['status'] == 'Confirmed' for i in report['issues'])
-        assert all(i['source_link']['status'] == 'Probable source link' for i in report['issues']
+        # PRD correlation pairs independent proof with source without instrumentation.
+        assert report['correlation']['policy'] == 'prd'
+        assert expected <= {i['cwe'] for i in report['issues'] if i['status'] == 'Confirmed'}
+        assert all(i['source_link']['status'] == 'Confirmed source link' for i in report['issues']
                    if i['cwe'] in expected and i['verification'] == 'verified')
         assert any(i["cwe"] == "CWE-639" and i["verification"] == "verified" for i in report["issues"])
         assert not any(b["route"].startswith(("/safe/","/shared/")) for i in report["issues"] for b in i["bindings"])

@@ -60,7 +60,9 @@ def resolve_environment(value):
 
 def validate_scan_options(value):
     if not isinstance(value, dict): raise ValueError("Configuration must be a JSON object.")
-    allowed = {"trace", "browser", "laravel", "workflows", "scanners", "import_gaps", "ai", "scope", "limits", "build", "requests", "traversal_fixtures", "authorization", "allowed_methods", "timeout", "max_requests", "interval", "lab", "session", "discovery", "php_routes", "runtime_inputs", "php_switches", "php_platform", "php_document_root", "stored_xss"}
+    allowed = {"correlation", "trace", "browser", "laravel", "workflows", "scanners", "import_gaps", "ai", "scope", "limits", "build", "requests", "traversal_fixtures", "authorization", "allowed_methods", "timeout", "max_requests", "interval", "lab", "session", "discovery", "php_routes", "runtime_inputs", "php_switches", "php_platform", "php_document_root", "stored_xss"}
+    from .correlate import options as correlation_options
+    correlation_options(value.get('correlation'))
     from .tracing import options as trace_options
     trace_options(value.get('trace'))
     from .browser import options as browser_options
@@ -220,7 +222,7 @@ class Runtime:
         self.checks: list[Check] = []
         self.gaps: list[dict] = []
         self.build = {"status": "unverified", "expected": analysis.digest,
-                      "reason": "No build identity endpoint configured; source attribution remains provisional because deployment identity is unverified."}
+                      "reason": "No build identity endpoint configured; deployment identity is unverified."}
         self.discovered_inputs = []
         self.discovered_pages = []
         self.active_scenario = None
@@ -320,7 +322,8 @@ class Runtime:
             return
         spec = self.config.get("build")
         if not spec:
-            self.gaps.append(gap("build", self.build["reason"]))
+            if (self.config.get('correlation') or {}).get('policy') == 'strict':
+                self.gaps.append(gap("build", self.build["reason"]))
             self.emit("build", self.build)
             return
         try:

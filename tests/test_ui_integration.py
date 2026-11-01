@@ -25,10 +25,10 @@ def test_ui_scan_evidence_and_export_history_survive_restart(shop, tmp_path):
         assert state['error'] is None and not state['running']
         scan_id = state['report']['id']
         view = client.get('/api/ui/scans/'+scan_id, headers=headers).json()
-        assert view['counts'] == {'confirmed': 0, 'runtime_only': 4, 'code_only': 5}
+        assert view['counts'] == {'confirmed': 3, 'runtime_only': 1, 'code_only': 2}
         assert view['coverage']['files_parsed'] > 0
         issues = client.get('/api/ui/issues', params={'scan_id': scan_id}, headers=headers).json()
-        assert len(issues) == 9 and all(i['reasoning']['native'] for i in issues)
+        assert len(issues) == 6 and all(i['reasoning']['native'] for i in issues)
         runtime = next(i for i in issues if i['status']=='runtime_only' and i['cwe']==639)
         assert runtime['sast'] is None and runtime['dast']
         assert runtime['dast']['payload'] == '2'  # exact object ID in the recorded access-policy request
@@ -43,7 +43,7 @@ def test_ui_scan_evidence_and_export_history_survive_restart(shop, tmp_path):
     with local_client(create_app(settings)) as client:
         rows = client.get('/api/ui/scans',headers=headers).json()
         assert rows[0]['id']==scan_id
-        assert client.get('/api/ui/scans/'+scan_id,headers=headers).json()['counts']['confirmed']==0
+        assert client.get('/api/ui/scans/'+scan_id,headers=headers).json()['counts']['confirmed']==3
     other = deepcopy(settings); other.target = 'http://127.0.0.1:9999'
     with local_client(create_app(other)) as client:
         assert client.get('/api/ui/scans',headers=headers).json() == []

@@ -52,11 +52,10 @@ echo {call}($value);
         verified = [i for i in report['issues'] if i['cwe'] == 'CWE-78' and i['verification'] == 'verified']
         assert len(verified) == 1
         issue = verified[0]
-        assert issue['status'] == 'Runtime only'
+        assert issue['status'] == ('Confirmed' if with_source else 'Runtime only')
         if with_source:
-            assert issue['source_link']['status'] == 'Probable source link'
-            candidate = next(i for i in report['issues'] if i['id'] in issue['candidate_source_ids'])
-            assert candidate['source']['file'] == library and candidate['source']['function'] == function
+            assert issue['source_link']['status'] == 'Confirmed source link'
+            assert issue['source']['file'] == library and issue['source']['function'] == function
         else:
             assert issue['source'] is None and report['source_files'] == 0
         assert all(b['parameter'] == parameter for b in issue['bindings'])

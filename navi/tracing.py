@@ -85,9 +85,9 @@ class TraceTransport:
 def narrow(candidates, finding, digest, required=False):
     observations = [e for e in finding.evidence if e.get('request', {}).get('tested_input')]
     present = any(e.get('trace') for e in observations)
-    if not present and not required: return candidates, False, 'No authenticated operation/input execution trace; the source link remains provisional.'
+    if not present and not required: return candidates, False, 'No authenticated operation/input execution trace was supplied.'
     if not observations or any(e.get('trace', {}).get('status') != 'verified' or e['trace'].get('source_digest') != digest for e in observations):
-        if not required and all(e.get('trace', {}).get('status', 'missing') == 'missing' for e in observations): return candidates, False, 'No authenticated operation/input execution trace; the source link remains provisional.'
+        if not required and all(e.get('trace', {}).get('status', 'missing') == 'missing' for e in observations): return candidates, False, 'No authenticated operation/input execution trace was supplied.'
         return [], False, 'Missing, rejected or mismatched execution traces; the source link was withheld.'
     if any(e['trace'].get('version') != 2 for e in observations):
         return candidates, False, 'Legacy traces record execution locations without exact operation/input attribution.'

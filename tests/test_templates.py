@@ -200,9 +200,9 @@ def test_template_match_cannot_confirm_but_attaches_to_independent_proof():
     assert next(i for i in issues if i['status'] == 'Runtime only')['link_confidence'] == 'runtime proof missing'
     proof = deepcopy(signal); proof.id = 'proof'; proof.verification = 'verified'; proof.evidence = [{'label': 'native proof'}]
     joined = correlate(analysis, [signal, proof], {'status': 'unverified'})
-    assert len(joined) == 2 and joined[0]['status'] == 'Runtime only'
-    assert set(joined[0]['findings']) == {'match', 'proof'}
-    assert joined[0]['source_link']['status'] == 'Probable source link'
+    assert len(joined) == 1 and joined[0]['status'] == 'Confirmed'
+    assert set(joined[0]['findings']) == {'source', 'match', 'proof'}
+    assert joined[0]['source_link']['status'] == 'Confirmed source link'
     assert joined == correlate(analysis, [proof, signal, proof, signal], {'status': 'unverified'})
 
 

@@ -153,9 +153,9 @@ def test_all_requested_cwes_correlate_only_with_matching_verified_input(laravel,
                       bindings=deepcopy(source.bindings), verification='verified')
     issues = correlate(analysis, [runtime], {'status': 'unverified'})
     issue = next(i for i in issues if i['cwe'] == cwe)
-    assert issue['status'] == 'Runtime only' and issue['findings'] == ['runtime']
-    assert issue['source_link']['status'] == 'Probable source link'
-    assert issue['candidate_source_ids'] == [source.id]
+    assert issue['status'] == 'Confirmed' and issue['findings'] == [source.id, 'runtime']
+    assert issue['source_link']['status'] == 'Confirmed source link'
+    assert issue['source_link']['operation_id'] == source.id
     runtime.bindings[0].parameter = 'different'
     assert not any(i['status'] == 'Confirmed' for i in correlate(analysis, [runtime], {'status': 'unverified'}))
 

@@ -1,4 +1,4 @@
-"""Keep runtime proof independent from exact source attribution."""
+"""PRD source/runtime correlation with optional strict execution attribution."""
 
 from __future__ import annotations
 
@@ -13,7 +13,19 @@ def binding_key(binding):
     return binding.route, binding.method, binding.location, binding.parameter
 
 
-def correlate(analysis: Analysis, runtime: list[Finding], build: dict, require_build_match=False, trace_required=False) -> list[dict]:
+def options(value=None):
+    value = {} if value is None else value
+    if not isinstance(value, dict) or value.keys() - {'policy'} or value.get('policy', 'prd') not in ('prd', 'strict'):
+        raise ValueError('correlation accepts policy: prd or strict.')
+    return {'policy': value.get('policy', 'prd')}
+
+
+def correlate(analysis: Analysis, runtime: list[Finding], build: dict, require_build_match=False, trace_required=False,
+              policy='prd') -> list[dict]:
+    policy = options({'policy': policy})['policy']
+    strict = policy == 'strict'
+    build_required = strict or require_build_match
+    execution_required = strict or trace_required
     issues = {}
 
     def make(key, finding, status):
@@ -23,7 +35,7 @@ def correlate(analysis: Analysis, runtime: list[Finding], build: dict, require_b
                 "candidate_source_ids": [], "handler_locations": [], "fix": RULES.get(finding.cwe, ('', '', 'Review the scanner evidence and address the reported weakness at its source.'))[2], "notes": [],
                 "deployment_identity": build.get('status', 'unverified'), "correlation_checks": [],
                 "source_link": {"status": "Code only" if status == "Code only" else "Runtime only",
-                                "operation_id": None, "missing_evidence": []},
+                                "operation_id": None, "policy": policy, "basis": None, "missing_evidence": []},
                 "evidence_graph": {"version": 1, "source_flows": list(finding.source_flows), "runtime_nodes": [], "edges": []}}
 
     def attach(issue, finding):
@@ -66,32 +78,47 @@ def correlate(analysis: Analysis, runtime: list[Finding], build: dict, require_b
         unique = candidates[0] if len(candidates) == 1 else None
         flows = matching(unique, keys) if unique else []
         complete = bool(flows) and all(g.get('complete') for g in flows)
-        # require_build_match is retained for callers of the old API; false no
-        # longer permits an unverified deployment to establish a source link.
-        confirmed = bool(unique and complete and traced and native and build.get('status') == 'matched')
+        # PRD matching needs a unique source-derived input binding and native
+        # runtime proof. Extra evidence is reported honestly, not fabricated.
+        # Explicitly required checks and contradictory evidence still veto links.
+        build_ok = build.get('status') == 'matched' if build_required else build.get('status') != 'mismatch'
+        confirmed = bool(unique and native and build_ok and (not strict or complete)
+                         and (not execution_required or traced))
         missing = []
         if not native: missing.append('Independent native runtime proof is missing.')
-        if not unique: missing.append('The executed source operation is unresolved or ambiguous.')
-        if not complete: missing.append('A complete modeled input-to-sink path is missing.')
-        if not traced: missing.append(trace_reason or 'Authenticated operation/input execution evidence is missing.')
-        if build.get('status') != 'matched': missing.append('Deployment identity is unverified or mismatches the scanned source.')
+        if not unique: missing.append('A unique source-derived route/input candidate is missing or ambiguous.')
+        if strict and not complete: missing.append('A complete modeled input-to-sink path is missing.')
+        if execution_required and not traced: missing.append(trace_reason or 'Authenticated operation/input execution evidence is missing.')
+        elif not candidates and trace_reason: missing.append(trace_reason)
+        if not build_ok: missing.append('Deployment identity is unverified or mismatches the scanned source.')
+        evidence_checks = [
+            {'name': 'Runtime proof', 'result': 'pass' if native else 'unknown', 'required': True,
+             'detail': 'Native test requests independently reproduced the vulnerability.' if native else 'Independent native runtime proof is missing.'},
+            {'name': 'Source flow', 'result': 'pass' if complete else 'unknown', 'required': strict,
+             'detail': 'A complete modeled input-to-sink path is recorded.' if complete else 'A complete flow graph is required by strict policy.' if strict else 'A complete flow graph is unavailable; PRD matching uses the source-derived route/input binding.'},
+            {'name': 'Runtime trace', 'result': 'pass' if traced else 'unknown', 'required': execution_required,
+             'detail': 'Signed request-bound traces attribute the tested input to this operation.' if traced else trace_reason or 'No authenticated operation/input trace was supplied.'},
+            {'name': 'Deployment identity', 'result': 'pass' if build.get('status') == 'matched' else 'fail' if build.get('status') == 'mismatch' else 'unknown',
+             'required': build_required, 'detail': build.get('reason') or 'Deployment identity was not verified.'}]
         if confirmed:
             issue = issues[unique.id]
             issue['status'] = 'Confirmed'
             issue['verification'] = 'verified'
-            issue['link_confidence'] = 'authenticated runtime trace and source flow'
-            issue['source_link'] = {'status': 'Confirmed source link', 'operation_id': unique.id, 'missing_evidence': []}
+            attributed = complete and traced and build.get('status') == 'matched'
+            basis = 'authenticated runtime trace and source flow' if attributed else 'PRD route and input match'
+            issue['link_confidence'] = basis
+            issue['source_link'] = {'status': 'Confirmed source link', 'operation_id': unique.id,
+                                    'policy': policy, 'basis': basis, 'missing_evidence': []}
             binding = next(b for b in finding.bindings if binding_key(b) in {binding_key(s) for s in unique.bindings})
             checks = [
                 ('Same CWE', f"Both scanners report {finding.cwe}."),
                 ('Same route and method', f"{binding.method} {binding.route} maps to {binding.handler}."),
                 ('Same parameter', f"Both findings concern {binding.location} parameter {binding.parameter}."),
-                ('Source flow', f"Modeled value propagation reaches exact operation {unique.id} at {unique.source['file']}:{unique.source['line']}."),
-                ('Runtime proof', 'Native test requests independently reproduced the vulnerability.'),
-                ('Runtime trace', 'Signed request-bound traces attribute the tested input to this exact operation throughout the recorded probe requests.'),
-                ('Deployment identity', 'The running application reported an identity matching the scanned source.')]
+                ('Unique source candidate', f"One source-derived candidate matches: {unique.source['file']}:{unique.source['line']} ({unique.id}).")]
             for name, detail in checks:
-                check = {'name': name, 'result': 'pass', 'detail': detail}
+                check = {'name': name, 'result': 'pass', 'detail': detail, 'required': True}
+                if check not in issue['correlation_checks']: issue['correlation_checks'].append(check)
+            for check in evidence_checks:
                 if check not in issue['correlation_checks']: issue['correlation_checks'].append(check)
             issue['link_reasons'] = [c['detail'] for c in issue['correlation_checks']]
             attach(issue, finding)
@@ -101,14 +128,16 @@ def correlate(analysis: Analysis, runtime: list[Finding], build: dict, require_b
             issue['candidate_source_ids'] = [f.id for f in [*original_candidates, *asserted]]
             probable = bool(unique and native and build.get('status') != 'mismatch')
             issue['source_link'] = {'status': 'Probable source link' if probable else 'Runtime only',
-                                    'operation_id': unique.id if probable else None, 'missing_evidence': missing}
+                                    'operation_id': unique.id if probable else None, 'policy': policy,
+                                    'basis': 'unique source candidate; confirmation requirements incomplete' if probable else None,
+                                    'missing_evidence': missing}
             issue['link_reasons'] = list(missing)
             if len(candidates) > 1:
                 issue['link_confidence'] = 'ambiguous'
                 issue['link_reasons'].insert(0, f'{len(candidates)} source operations match this input; no source cause was selected.')
             elif original_candidates and not native: issue['link_confidence'] = 'runtime proof missing'
-            elif original_candidates and build.get('status') != 'matched': issue['link_confidence'] = 'build unverified'
-            elif unique and not complete: issue['link_confidence'] = 'incomplete source flow'
+            elif original_candidates and not build_ok: issue['link_confidence'] = 'build unverified'
+            elif strict and unique and not complete: issue['link_confidence'] = 'incomplete source flow'
             elif original_candidates: issue['link_confidence'] = 'execution trace unresolved'
             elif asserted:
                 issue['link_confidence'] = 'operator mapping only'
@@ -116,11 +145,7 @@ def correlate(analysis: Analysis, runtime: list[Finding], build: dict, require_b
             else:
                 issue['link_reasons'] = ['No supported static vulnerability candidate matches this runtime result.']
             if stored_flow: issue['link_reasons'] = ['Stored-XSS behavior was verified across a write and separate read; the storage-to-output source path is not modeled.']
-            issue['correlation_checks'] = [
-                {'name': 'Runtime proof', 'result': 'pass' if native else 'unknown', 'detail': 'Native vulnerability verification is independent of source attribution.'},
-                {'name': 'Source flow', 'result': 'pass' if complete else 'unknown', 'detail': 'A unique complete modeled input-to-sink path is required.'},
-                {'name': 'Runtime trace', 'result': 'pass' if traced else 'unknown', 'detail': trace_reason or 'Authenticated operation/input attribution was recorded.'},
-                {'name': 'Deployment identity', 'result': 'pass' if build.get('status') == 'matched' else 'fail' if build.get('status') == 'mismatch' else 'unknown', 'detail': build.get('reason') or 'The deployed identity must match the scanned source.'}]
+            issue['correlation_checks'] = evidence_checks
             for route in analysis.routes:
                 if any(b.route == route.path and b.method in route.methods for b in finding.bindings):
                     location = {"file": route.file, "function": route.function, "line": route.line, "role": "handler context only"}
@@ -138,7 +163,8 @@ def correlate(analysis: Analysis, runtime: list[Finding], build: dict, require_b
                     'native_verified': native, 'trace_status': (evidence.get('trace') or {}).get('status', 'missing')}
             if node not in graph['runtime_nodes']: graph['runtime_nodes'].append(node)
             if confirmed:
-                edge = {'from': node['id'], 'to_operation': unique.id, 'kind': 'authenticated_input_attribution'}
+                edge = {'from': node['id'], 'to_operation': unique.id,
+                        'kind': 'authenticated_input_attribution' if traced else 'prd_input_correlation'}
                 if edge not in graph['edges']: graph['edges'].append(edge)
     for issue in issues.values():
         from .evidence import runtime_observations

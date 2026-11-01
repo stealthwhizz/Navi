@@ -64,6 +64,8 @@ def resolve(args):
     source = str(Path(source).resolve()) if source else None
     config_path = getattr(args, "config", None) or project.get("config")
     config = load_config(config_path)
+    if getattr(args, 'correlation_policy', None):
+        config['correlation'] = {**(config.get('correlation') or {}), 'policy': args.correlation_policy}
     scanners = config.setdefault('scanners', {})
     scanners.setdefault('mode', 'templates')
     if getattr(args, 'scanner', None): scanners['mode'] = args.scanner
@@ -103,6 +105,7 @@ def resolve(args):
 
 
 def plan(source, target, config, browser=True):
+    from .correlate import options as correlation_options
     analysis = analyze(source, config) if source else no_source_analysis()
     from .route_inputs import align_config
     config = align_config(analysis.routes, config)
@@ -125,6 +128,7 @@ def plan(source, target, config, browser=True):
         tests.append({"cwe": cwe, **asdict(binding), "state": "skipped" if skip or not target else "planned",
                       "reason": skip or ("No target configured." if not target else None), "prerequisites": prerequisites})
     return {"source": str(Path(source).resolve()) if source else None, "target": target, "source_digest": analysis.digest,
+            "correlation": correlation_options(config.get('correlation')),
             "routes": [asdict(r) for r in analysis.routes], "static_candidates": len(analysis.findings), "ai": {**ai_options(config.get("ai")), "note": "AI model calls are not made by plan; accepted proposals may add native tests during scan."},
             "function_map": analysis.function_map, "tests": tests, 'templates': manifest, 'http_template_tests': http_tests,
             "discovery": {"enabled": bool(config.get("discovery", {}).get("enabled")),

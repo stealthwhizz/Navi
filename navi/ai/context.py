@@ -204,6 +204,7 @@ def report_context(report, sources, opts, redactor):
                              'shell_marker_in_payload': e.get('execution_proof', {}).get('marker_in_payload'),
                              'has_explicit_access_policy': bool(e.get('policy'))})
         issues.append({'id': issue['id'], 'cwe': issue['cwe'], 'status': issue['status'], 'verification': issue['verification'],
+                       'source_link': issue.get('source_link'),
                        'source': {k: v for k, v in (issue.get('source') or {}).items() if k in {'file', 'line', 'function', 'operation'}},
                        'bindings': issue.get('bindings', []), 'candidate_source_ids': sorted(allowed),
                        'link_reasons': issue.get('link_reasons', []), 'evidence': evidence,

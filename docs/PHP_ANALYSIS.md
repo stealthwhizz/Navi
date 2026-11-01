@@ -42,7 +42,7 @@ Redirect probes use generic external/scheme-relative URLs and, when available, t
 
 ## Correlation
 
-A Confirmed issue needs runtime proof and exactly one source operation with matching CWE, URL path, method, parameter and input location. The source binding must come from the analyzer, not solely a supplied PHP mapping. Matching source/runtime evidence becomes one issue, with the exact file/line/snippet, request/payload, link explanation and fix. Repeated scans retain the source operation's fingerprint.
+Under the default `prd` correlation policy, a Confirmed issue needs runtime proof and exactly one source operation with matching CWE, URL path, method, parameter and input location. The source binding must come from the analyzer, not solely a supplied PHP mapping. Matching source/runtime evidence becomes one issue, with the exact file/line/snippet, request/payload, link explanation and fix. Repeated scans retain the source operation's fingerprint. Use `--correlation-policy strict` to additionally require complete flow, signed exact operation/input traces, and matched build identity; see [correlation policies](ACCURACY.md).
 
 Several matching operations remain ambiguous. Deployment identity is reported separately; a configured identity mismatch blocks merging. PHP links are explicitly described as source-map inferences, not runtime instruction traces. Server rewrites or unmodeled dispatch can invalidate a file-layout assumption, so the document root must match the deployment.
 

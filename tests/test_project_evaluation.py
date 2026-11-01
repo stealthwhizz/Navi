@@ -59,7 +59,7 @@ def test_manual_fixture_answer_key_scored_independently(shop, tmp_path):
     result = evaluate(report, key)
     assert result["metrics"]["code_recall"]["percent"] == 100
     assert result["metrics"]["runtime_recall"]["percent"] == 80
-    assert result["metrics"]["correct_links"]["percent"] == 0
+    assert result["metrics"]["correct_links"]["percent"] == 75
     assert result["metrics"]["decoy_issue_share"]["percent"] == 0
     assert result["metrics"]["unseen_pairs"]["percent"] is None
     assert not result["thresholds"]["great"]["metrics"]["runtime_recall"]["passes"]  # PRD is >80, not >=80

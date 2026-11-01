@@ -30,9 +30,9 @@ def test_native_runtime_and_policy_results(shop):
     assert idor.verification == "verified"
     assert all(value == "[redacted]" for evidence in idor.evidence for value in evidence["request"]["headers"].values())
     issues = correlate(runtime.analysis, findings, runtime.build)
-    assert len(issues) == 9
-    assert sum(i["status"] == "Confirmed" for i in issues) == 0
-    assert sum(i["source_link"]["status"] == "Probable source link" for i in issues) == 3
+    assert len(issues) == 6
+    assert sum(i["status"] == "Confirmed" for i in issues) == 3
+    assert sum(i["source_link"]["status"] == "Probable source link" for i in issues) == 0
     assert next(i for i in issues if i["cwe"] == "CWE-639")["status"] == "Runtime only"
 
 
@@ -44,10 +44,9 @@ def test_second_app_runs_without_first_app_routes(connect_app):
     assert {f.cwe for f in findings} == {"CWE-89", "CWE-22", "CWE-601"}
     issues = correlate(runtime.analysis, findings, runtime.build)
     sql = next(i for i in issues if i["cwe"] == "CWE-89")
-    assert sql["source_link"]["status"] == "Probable source link"
-    candidate = next(i for i in issues if i["id"] in sql["candidate_source_ids"])
-    assert candidate["source"]["file"] == "queries.py"
-    assert sql["status"] == "Runtime only"
+    assert sql["source_link"]["status"] == "Confirmed source link"
+    assert sql["source"]["file"] == "queries.py"
+    assert sql["status"] == "Confirmed"
     assert all(b["route"].startswith("/v2/") for i in issues for b in i["bindings"])
 
 

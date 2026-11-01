@@ -101,6 +101,8 @@ def route_lines(routes, full=False):
 
 def correlation_lines(issues, findings, ai):
     refs = references(findings)
+    policies = sorted({i.get('source_link', {}).get('policy') for i in issues if i.get('source_link', {}).get('policy')})
+    if policies: yield 'Correlation policy: ' + ', '.join(policies) + '.'
     linked = [i for i in issues if i['status'] == 'Confirmed']
     yield f"Native correlation: {counted(len(linked), 'source/runtime link')}."
     for issue in linked:

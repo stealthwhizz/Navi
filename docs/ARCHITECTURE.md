@@ -9,7 +9,7 @@ flowchart LR
     Config[Scope, authentication, workflows] --> Runtime
     Static --> Model[Shared findings and input bindings]
     Runtime --> Model
-    Traces[Signed operation traces and build identity] --> Correlation
+    Traces[Optional signed traces and build identity] --> Correlation
     Model --> Correlation[Source attribution]
     Correlation --> Reports[Worklist and reports]
     AI[Optional AI explanations] --> Reports
@@ -32,7 +32,7 @@ flowchart LR
 | `navi/transport.py`, `navi/control.py` | Scoped HTTP, TLS/address pinning, request limits, deadlines, and cancellation |
 | `navi/workflows.py`, `navi/workflow_state.py` | Form refresh, session renewal, setup/extraction/substitution, and cleanup |
 | `navi/templates/` | Local PHP/HTTP template interpreters and original starter packs |
-| `navi/correlate.py`, `navi/tracing.py` | Exact source attribution, authenticated trace validation, and provisional link states |
+| `navi/correlate.py`, `navi/tracing.py` | PRD matching, optional strict attribution, authenticated trace validation, and provisional link states |
 | `navi/ai/` | Provider configuration, redacted context, bounded requests, and reviewed advice |
 | `navi/worklist.py`, `navi/reasoning.py`, `navi/report.py`, `navi/console.py` | Prioritization, explanations, and JSON/HTML/text/SARIF presentation |
 | `navi/cli.py`, `navi/project.py` | CLI commands, project settings, plans, and diagnostics |
@@ -44,7 +44,7 @@ flowchart LR
 
 ## Evidence boundaries
 
-SAST produces candidates and modeled flow, not exploitability claims. Native runtime verifiers establish observed behavior with controls. Template matches remain unverified unless independently reproduced. Correlation requires additional source, input, trace, and deployment evidence; AI does not override those decisions.
+SAST produces candidates and modeled flow, not exploitability claims. Native runtime verifiers establish observed behavior with controls. Template matches remain unverified unless independently reproduced. Default PRD correlation requires one source-derived candidate matching the verified runtime CWE, route, method, input location, and parameter. Strict policy additionally requires complete flow, signed exact traces, and matching deployment identity. Ambiguity, unverified template matches, and contradictory evidence never confirm a pair; AI does not override those decisions.
 
 The service runs one active scan per instance for one configured workspace. CLI jobs can run independently. File exports remain usable without PostgreSQL. Optional browser, database, or provider failures retain completed evidence and report incomplete coverage.
 
@@ -58,12 +58,13 @@ Reports use schema **1.2**. Source and runtime scanners share a finding shape; u
 |---|---|
 | `findings[]` | Stable `id`/`fingerprint`, `origin` (`sast` or `dast`), CWE, title, severity, source location/snippet, input bindings, verification, evidence, scanner/rule identity, and modeled `source_flows` |
 | `runtime[]` on a finding | Recorded URL, method, input location/name, actual tested payload, request metadata, response, evidence index, and available browser/command/trace observations |
-| `issues[]` | Correlated finding IDs, candidate source IDs, source-link reasons/checks, `source_link`, `evidence_graph`, fix suggestion, heuristic risk, and triage |
+| `correlation.policy` | `prd` (default) or `strict`; selects confirmation requirements |
+| `issues[]` | Correlated finding IDs, candidate source IDs, source-link reasons/checks (including whether required), `source_link` with policy/basis, `evidence_graph`, fix suggestion, heuristic risk, and triage |
 | `routes[]`, `function_map` | Supported source handlers, file/line ranges, and resolved/unresolved helper relationships |
 | `checks[]`, `coverage` | Verified, not reproduced, inconclusive, skipped, and error outcomes, plus prerequisites and limitations |
 
 Input locations remain distinct: query, form, JSON, path, header, cookie, and configured session values. Authentication headers are redacted; baselines and negative controls remain attached. No missing source location, payload, or proof is fabricated.
 
-`verification` describes runtime proof independently of `source_link.status`. Only the full [source attribution requirements](ACCURACY.md) permit a Confirmed merge. Provisional candidates retain separate IDs. The queue orders Confirmed issues first, then descending heuristic risk; this score is not CVSS. Stable fingerprints support comparison across scans, and a finding that is not observed later is not automatically fixed.
+`verification` describes runtime proof independently of `source_link.status`. The selected policy must meet its [source attribution requirements](ACCURACY.md) to permit a Confirmed merge. Missing optional evidence remains unknown. Older reports without a policy field keep their original classifications. Provisional candidates retain separate IDs. The queue orders Confirmed issues first, then descending heuristic risk; this score is not CVSS. Stable fingerprints support comparison across scans, and a finding that is not observed later is not automatically fixed.
 
 JSON and SARIF retain structured evidence; HTML/text and the dashboard present it for review. The evaluator also accepts older schema 1.0 and 1.1 reports.

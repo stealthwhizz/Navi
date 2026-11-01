@@ -107,11 +107,11 @@ def test_fastapi_scan_lifecycle_and_issue_details(shop, tmp_path):
         assert state["report"]["id"] == scan_id
         assert client.get(f"/api/scans/{scan_id}").status_code == 200
         confirmed = client.get("/api/issues?status=Confirmed").json()
-        assert not confirmed
+        assert len(confirmed) == 3 and all(i['source_link']['policy'] == 'prd' for i in confirmed)
         provisional = client.get("/api/issues?status=Runtime%20only").json()
-        assert any(i["source_link"]["status"] == "Probable source link" for i in provisional)
-        issue = client.get(f'/api/issues/{provisional[0]["id"]}').json()
-        assert issue["evidence"]
+        assert any(i['cwe'] == 'CWE-639' for i in provisional)
+        issue = client.get(f'/api/issues/{confirmed[0]["id"]}').json()
+        assert issue["evidence"] and issue['source'] and len(issue['findings']) == 2
         assert client.get("/api/issues/not-real").status_code == 404
         assert client.get("/api/report.json").json()["id"] == scan_id
         assert client.get("/api/report.sarif").json()["version"] == "2.1.0"

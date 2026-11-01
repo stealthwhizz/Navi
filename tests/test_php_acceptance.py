@@ -96,8 +96,8 @@ def assert_shell_result(report, names):
     findings = [i for i in report['issues'] if i['cwe'] == 'CWE-78' and i['verification'] == 'verified']
     assert len(findings) == 1
     issue = findings[0]
-    assert issue['source_link']['status'] == 'Probable source link'
-    candidate = next(i for i in report['issues'] if i['id'] in issue['candidate_source_ids'])
+    assert issue['source_link']['status'] == 'Confirmed source link'
+    candidate = issue
     assert candidate['source']['file'] == 'helpers.php' and candidate['source']['line'] == 3
     assert candidate['source']['function'] == names['function']
     assert issue['runtime'] and issue['fix'] and issue['reasoning']
@@ -151,7 +151,7 @@ def test_live_php_http_without_vulnerability_configuration(independent_php, tmp_
             assert_shell_result(report, names)
             redirects = [i for i in report['issues'] if i['cwe'] == 'CWE-601' and i['verification'] == 'verified']
             assert len(redirects) == 1
-            candidate = next(i for i in report['issues'] if i['id'] in redirects[0]['candidate_source_ids'])
+            candidate = redirects[0]
             assert candidate['source']['file'] == 'public/' + names['redirect'] + '.php'
             assert any(e.get('variant') == 'observed-destination-path' for e in redirects[0]['evidence'])
         finally:
@@ -200,8 +200,8 @@ def test_real_php_sqlite_with_discovered_nondefault_seed(php_sql_app, tmp_path):
     transport = PHPBodyTransport(public)
     report = scan(public, transport.target, {'ai': {'enabled': False}, 'interval': 0}, tmp_path / 'sql-report', transport=transport, browser=False)
     findings = [i for i in report['issues'] if i['cwe'] == 'CWE-89' and i['verification'] == 'verified']
-    assert len(findings) == 1 and findings[0]['source_link']['status'] == 'Probable source link'
-    candidate = next(i for i in report['issues'] if i['id'] in findings[0]['candidate_source_ids'])
+    assert len(findings) == 1 and findings[0]['source_link']['status'] == 'Confirmed source link'
+    candidate = findings[0]
     assert candidate['source']['file'] == name + '.php'
     assert any(c['route'] == '/' + name + '_bound.php' and c['cwe'] == 'CWE-89' and c['outcome'] == 'not_reproduced' for c in report['checks'])
 
@@ -216,7 +216,6 @@ def test_actual_php_html_browser_execution(independent_php, tmp_path):
     transport = PHPBodyTransport(public)
     report = scan(root, transport.target, {'php_document_root': 'public', 'allowed_methods': ['GET', 'POST'],
                   'interval': 0, 'ai': {'enabled': False}}, tmp_path / 'browser-report', transport=transport)
-    assert any(i['cwe'] == 'CWE-79' and i['source_link']['status'] == 'Probable source link' and
-               any(candidate['source']['file'] == 'public/' + names['reflect'] + '.php'
-                   for candidate in report['issues'] if candidate['id'] in i['candidate_source_ids'])
+    assert any(i['cwe'] == 'CWE-79' and i['source_link']['status'] == 'Confirmed source link' and
+               i['source']['file'] == 'public/' + names['reflect'] + '.php'
                for i in report['issues'])
