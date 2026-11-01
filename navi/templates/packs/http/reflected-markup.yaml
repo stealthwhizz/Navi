@@ -1,0 +1,35 @@
+# Navi-authored example using supported Nuclei HTTP/fuzzing syntax.
+# This is a preliminary matcher signal, not execution proof.
+# SPDX-License-Identifier: MIT
+id: navi-http-reflected-markup
+info:
+  name: reflected-markup template signal
+  author: Navi
+  severity: high
+  classification:
+    cwe-id: CWE-79
+http:
+- method: GET
+  path:
+  - '{{BaseURL}}'
+  fuzzing:
+  - part: query
+    type: replace
+    mode: single
+    fuzz:
+    - <navi-{{randstr}}>
+  - part: body
+    type: replace
+    mode: single
+    fuzz:
+    - <navi-{{randstr}}>
+  matchers-condition: and
+  matchers:
+  - type: word
+    words:
+    - <navi-{{randstr}}>
+  - type: word
+    part: header
+    words:
+    - text/html
+  stop-at-first-match: true

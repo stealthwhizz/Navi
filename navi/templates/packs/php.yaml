@@ -1,0 +1,173 @@
+# Navi-authored starter rules. Not copied from the Semgrep registry.
+# SPDX-License-Identifier: MIT
+rules:
+- id: navi.php.sql
+  languages:
+  - php
+  mode: taint
+  message: Request input reaches a sensitive operation (CWE-89).
+  severity: ERROR
+  metadata:
+    cwe: CWE-89
+    severity: high
+    author: Navi
+    license: MIT
+  pattern-sources:
+  - pattern: $_GET[...]
+  - pattern: $_POST[...]
+  - pattern: $_REQUEST[...]
+  - pattern: $_COOKIE[...]
+  - pattern: $_SESSION[...]
+  - pattern: filter_input(INPUT_GET, $KEY, ...)
+  - pattern: filter_input(INPUT_POST, $KEY, ...)
+  - pattern: filter_input(INPUT_COOKIE, $KEY, ...)
+  pattern-sinks:
+  - patterns:
+    - pattern: mysqli_query($DB, $SQL, ...)
+    - focus-metavariable: $SQL
+  - patterns:
+    - pattern: mysqli_multi_query($DB, $SQL)
+    - focus-metavariable: $SQL
+  - patterns:
+    - pattern: mysql_query($SQL, ...)
+    - focus-metavariable: $SQL
+  - patterns:
+    - pattern: $DB->query($SQL, ...)
+    - focus-metavariable: $SQL
+  - patterns:
+    - pattern: $DB->prepare($SQL, ...)
+    - focus-metavariable: $SQL
+  - patterns:
+    - pattern: $DB->exec($SQL)
+    - focus-metavariable: $SQL
+  - pattern: pg_query(...)
+  pattern-sanitizers:
+  - pattern: intval(...)
+  - pattern: floatval(...)
+- id: navi.php.shell
+  languages:
+  - php
+  mode: taint
+  message: Request input reaches a sensitive operation (CWE-78).
+  severity: ERROR
+  metadata:
+    cwe: CWE-78
+    severity: critical
+    author: Navi
+    license: MIT
+  pattern-sources:
+  - pattern: $_GET[...]
+  - pattern: $_POST[...]
+  - pattern: $_REQUEST[...]
+  - pattern: $_COOKIE[...]
+  - pattern: $_SESSION[...]
+  - pattern: filter_input(INPUT_GET, $KEY, ...)
+  - pattern: filter_input(INPUT_POST, $KEY, ...)
+  - pattern: filter_input(INPUT_COOKIE, $KEY, ...)
+  pattern-sinks:
+  - patterns:
+    - pattern: shell_exec($COMMAND, ...)
+    - focus-metavariable: $COMMAND
+  - patterns:
+    - pattern: exec($COMMAND, ...)
+    - focus-metavariable: $COMMAND
+  - patterns:
+    - pattern: system($COMMAND, ...)
+    - focus-metavariable: $COMMAND
+  - patterns:
+    - pattern: passthru($COMMAND, ...)
+    - focus-metavariable: $COMMAND
+  - patterns:
+    - pattern: popen($COMMAND, ...)
+    - focus-metavariable: $COMMAND
+  - pattern: '`$COMMAND`'
+  pattern-sanitizers: []
+- id: navi.php.xss
+  languages:
+  - php
+  mode: taint
+  message: Request input reaches a sensitive operation (CWE-79).
+  severity: ERROR
+  metadata:
+    cwe: CWE-79
+    severity: high
+    author: Navi
+    license: MIT
+  pattern-sources:
+  - pattern: $_GET[...]
+  - pattern: $_POST[...]
+  - pattern: $_REQUEST[...]
+  - pattern: $_COOKIE[...]
+  - pattern: $_SESSION[...]
+  - pattern: filter_input(INPUT_GET, $KEY, ...)
+  - pattern: filter_input(INPUT_POST, $KEY, ...)
+  - pattern: filter_input(INPUT_COOKIE, $KEY, ...)
+  pattern-sinks:
+  - pattern: echo $VALUE;
+  - pattern: print $VALUE;
+  - pattern: printf(...)
+  - pattern: vprintf(...)
+  pattern-sanitizers: []
+- id: navi.php.file
+  languages:
+  - php
+  mode: taint
+  message: Request input reaches a sensitive operation (CWE-22).
+  severity: ERROR
+  metadata:
+    cwe: CWE-22
+    severity: high
+    author: Navi
+    license: MIT
+  pattern-sources:
+  - pattern: $_GET[...]
+  - pattern: $_POST[...]
+  - pattern: $_REQUEST[...]
+  - pattern: $_COOKIE[...]
+  - pattern: $_SESSION[...]
+  - pattern: filter_input(INPUT_GET, $KEY, ...)
+  - pattern: filter_input(INPUT_POST, $KEY, ...)
+  - pattern: filter_input(INPUT_COOKIE, $KEY, ...)
+  pattern-sinks:
+  - patterns:
+    - pattern: file_get_contents($FILE, ...)
+    - focus-metavariable: $FILE
+  - patterns:
+    - pattern: readfile($FILE, ...)
+    - focus-metavariable: $FILE
+  - patterns:
+    - pattern: fopen($FILE, ...)
+    - focus-metavariable: $FILE
+  - patterns:
+    - pattern: file($FILE, ...)
+    - focus-metavariable: $FILE
+  - pattern: include $FILE;
+  - pattern: include_once $FILE;
+  - pattern: require $FILE;
+  - pattern: require_once $FILE;
+  pattern-sanitizers: []
+- id: navi.php.redirect
+  languages:
+  - php
+  mode: taint
+  message: Request input reaches a sensitive operation (CWE-601).
+  severity: ERROR
+  metadata:
+    cwe: CWE-601
+    severity: medium
+    author: Navi
+    license: MIT
+  pattern-sources:
+  - pattern: $_GET[...]
+  - pattern: $_POST[...]
+  - pattern: $_REQUEST[...]
+  - pattern: $_COOKIE[...]
+  - pattern: $_SESSION[...]
+  - pattern: filter_input(INPUT_GET, $KEY, ...)
+  - pattern: filter_input(INPUT_POST, $KEY, ...)
+  - pattern: filter_input(INPUT_COOKIE, $KEY, ...)
+  pattern-sinks:
+  - patterns:
+    - pattern: header($VALUE, ...)
+    - focus-metavariable: $VALUE
+  pattern-sanitizers: []

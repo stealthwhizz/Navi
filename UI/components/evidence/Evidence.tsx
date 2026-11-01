@@ -49,7 +49,7 @@ export function CodeEvidence({ issue }: { issue: Issue }) {
               <li key={i} className={step.resolved ? undefined : s.unresolved}>
                 <div>
                   <div className="mono wrap-any">{step.label}</div>
-                  <div className="meta"><span className="mono">{step.location}</span>{!step.resolved && <>, <span className="warning-text">unresolved step</span></>}</div>
+                  <div className="meta"><span className="mono">{step.location}</span>{!step.resolved && <>, <span className="warning-text">{step.resolved === null ? 'step resolution not recorded' : 'unresolved step'}</span></>}</div>
                 </div>
               </li>
             ))}
@@ -65,7 +65,7 @@ export function CodeEvidence({ issue }: { issue: Issue }) {
               </li>
             ))}
           </ul>
-        ) : <p className="muted">No sanitizer on this path.</p>}
+        ) : <p className="muted">No sanitizer details were recorded. This does not prove validation is absent.</p>}
       </Block>
     </Panel>
   );
@@ -81,13 +81,14 @@ export function RuntimeEvidence({ issue }: { issue: Issue }) {
     <Panel icon="globe" title="Runtime" rule={d.rule_id}>
       <dl className={ui.facts}>
         <dt>Request</dt><dd className="mono">{d.method} {d.url}</dd>
-        <dt>Parameter</dt><dd className="mono">{d.parameter ?? 'None'}</dd>
-        <dt>Payload</dt><dd className="mono">{d.payload ?? 'None'}</dd>
+        <dt>Parameter</dt><dd className="mono">{d.parameter ?? 'Not recorded'} {d.location && `(${d.location})`}</dd>
+        <dt>Payload</dt><dd className="mono wrap-any">{d.payload ?? 'Not recorded'}</dd>
       </dl>
-      <Block title="Request sent" action={<CopyButton text={d.request} what="raw request" />}>
+      <Block title="Recorded request metadata" action={<CopyButton text={d.request} what="request metadata" />}>
         <pre className={cx(s.code, s.raw)} tabIndex={0}><Marked text={d.request} needle={d.payload} /></pre>
       </Block>
       <Block title={`Response, status ${d.response.status}`} action={<CopyButton text={d.response.excerpt} what="response excerpt" />}>
+        {Object.keys(d.response.headers).length > 0 && <pre className={cx(s.code, s.raw)} tabIndex={0}>{Object.entries(d.response.headers).map(([name, value]) => `${name}: ${value}`).join('\n')}</pre>}
         {d.response.excerpt
           ? <pre className={cx(s.code, s.raw)} tabIndex={0}><Marked text={d.response.excerpt} needle={d.evidence} /></pre>
           : <p className="muted">The response had no body.</p>}
@@ -95,6 +96,12 @@ export function RuntimeEvidence({ issue }: { issue: Issue }) {
         {!evidenceShown && <p className="meta">The evidence string is outside the stored excerpt: <span className="mono">{d.evidence}</span></p>}
       </Block>
       <Block title="Why this counts as evidence"><p className="prose">{d.oracle}</p></Block>
+      <Block title={`All requests and controls (${d.observations.length})`}>
+        {d.observations.map((o) => <details key={o.evidence_index}>
+          <summary>{o.label} · {o.method} · HTTP {o.response.status}{o.variant && ` · ${o.variant}`}</summary>
+          <pre className={cx(s.code, s.raw)} tabIndex={0}>{JSON.stringify(o, null, 2)}</pre>
+        </details>)}
+      </Block>
     </Panel>
   );
 }

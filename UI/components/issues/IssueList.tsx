@@ -50,7 +50,6 @@ export function IssueList({ scan, issues, filter, fresh, onFilter }: Props) {
           <option value="">All vulnerability types</option>
           {Object.entries(CWE_NAME).map(([n, name]) => <option key={n} value={n}>CWE-{n} {name}</option>)}
         </select>
-        {c.suppressed > 0 && <Link href={{ pathname: '/suppressed/', query: { scan: scan.id } }}>{c.suppressed} suppressed as safe</Link>}
       </div>
       <IssueRows
         scan={scan} issues={shown} filter={filter} fresh={fresh} searching={!!q}
@@ -66,7 +65,7 @@ function IssueRows({ scan, issues, filter, fresh, searching, onClear }: Props & 
     if (filter.status || filter.cwe || searching) {
       return <Empty action={<button type="button" className={cx(ui.btn, ui.quiet)} onClick={onClear}>Clear search and filters</button>}>No issues match this search and these filters.</Empty>;
     }
-    if (isActive(scan)) return <Empty>Findings appear here as the scan runs.</Empty>;
+    if (isActive(scan)) return <Empty>Findings appear after runtime validation and correlation finish.</Empty>;
     if (scan.state === 'failed') return <Empty>The scan failed before reporting issues.</Empty>;
     return <Empty>{hasGaps(scan) ? 'This scan reported no issues, but it has coverage gaps. Review them before treating the app as clean.' : 'This scan reported no issues.'}</Empty>;
   }
@@ -84,7 +83,7 @@ function IssueRows({ scan, issues, filter, fresh, searching, onClear }: Props & 
               <td data-label="Severity"><SeverityMeter level={i.severity} /></td>
               <td data-label="Risk" className={ui.nowrap}>{i.risk.toFixed(1)}</td>
               <td data-label="CWE" className={ui.nowrap}>CWE-{i.cwe}</td>
-              <td data-label="Finding"><Link href={{ pathname: '/issue/', query: { id: i.id, scan: scan.id } }}>{i.title}</Link></td>
+              <td data-label="Finding"><Link href={{ pathname: '/issue/', query: { id: i.id, scan: scan.id } }}>{i.title}</Link><p className="meta">{i.reasoning.native}</p>{i.reasoning.ai ? <p className="meta"><strong>AI analysis:</strong> {i.reasoning.ai}</p> : <p className="meta">AI: {i.reasoning.ai_status.replaceAll('_', ' ')}</p>}</td>
               <td data-label="Route" className="mono">{i.route ? `${i.route.method} ${i.route.path}` : <span className="muted">Not mapped</span>}</td>
               <td data-label="Location" className="mono">{i.location ? loc(i.location.file, i.location.line) : <span className="muted">No source location</span>}</td>
             </tr>

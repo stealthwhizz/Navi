@@ -1,0 +1,35 @@
+# Navi-authored example using supported Nuclei HTTP/fuzzing syntax.
+# This is a preliminary matcher signal, not execution proof.
+# SPDX-License-Identifier: MIT
+id: navi-http-sql-error
+info:
+  name: sql-error template signal
+  author: Navi
+  severity: high
+  classification:
+    cwe-id: CWE-89
+http:
+- method: GET
+  path:
+  - '{{BaseURL}}'
+  fuzzing:
+  - part: query
+    type: postfix
+    mode: single
+    fuzz:
+    - ''''
+  - part: body
+    type: postfix
+    mode: single
+    fuzz:
+    - ''''
+  matchers-condition: and
+  matchers:
+  - type: regex
+    regex:
+    - (?i)sql syntax
+    - (?i)mysqli?_
+    - (?i)sqlite.*error
+    - (?i)unterminated quoted string
+    - (?i)SQLSTATE
+  stop-at-first-match: true

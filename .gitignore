@@ -1,10 +1,41 @@
-progress.md
-.venv/
 __pycache__/
+*.py[cod]
 .pytest_cache/
+.venv/
+venv/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
 *.egg-info/
+build/
+dist/
+artifacts/
+.navi/
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+
+# Local credentials
 .env
 .env.*
 !.env.example
-build/
-dist/
+/navi.json
+/.local-archive/
+/.agents/
+/.codex/
+/.aws/
+
+# Local targets belong outside the product source tree.
+/targets/
+/DVWA/
+/mutillidae-main/
+
+# Frontend dependencies and generated exports
+UI/node_modules/
+UI/.next/
+UI/out/
+UI/*.tsbuildinfo
+UI/next-env.d.ts
+navi/web/ui/

@@ -27,7 +27,7 @@ export function Coverage({ scan }: { scan: Scan }) {
   }
   const gaps = hasGaps(scan);
   return (
-    <details className={cx(ui.disclosure, s.section)} open={gaps}>
+    <details className={cx(ui.disclosure, s.section)}>
       <summary>
         What this scan covered
         {gaps

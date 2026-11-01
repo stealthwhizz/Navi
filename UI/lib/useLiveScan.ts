@@ -31,10 +31,12 @@ export function useLiveScan(scan: Scan | null, updateScan: (next: Scan) => void)
   useEffect(() => {
     if (!scanId || !active) return;
     let timer: number;
+    let cancelled = false;
     let last = scan;
     const poll = async () => {
       try {
         const next = await api.scan(scanId);
+        if (cancelled) return;
         if (next.state !== last?.state || next.phase !== last?.phase) setAnnouncement(announce(next));
         last = next;
         updateScan(next);
@@ -42,12 +44,13 @@ export function useLiveScan(scan: Scan | null, updateScan: (next: Scan) => void)
         setTick((n) => n + 1);
         if (isActive(next)) timer = window.setTimeout(poll, POLL_MS);
       } catch (err) {
+        if (cancelled) return;
         setPollError((err as Error).message);
         timer = window.setTimeout(poll, POLL_MS);
       }
     };
     timer = window.setTimeout(poll, POLL_MS);
-    return () => window.clearTimeout(timer);
+    return () => {cancelled = true; window.clearTimeout(timer);};
     // Restart only when the scan or its activity changes, not on every polled update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanId, active]);

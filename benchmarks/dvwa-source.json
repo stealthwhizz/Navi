@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "dataset": {
+    "name": "DVWA selected SQL and command source operations",
+    "provenance": "Operator-supplied DVWA checkout; manually reviewed concatenated SQL, direct shell arguments, bound SQL and numeric octet controls. File hashes pin the reviewed snippets. No runtime execution or unseen status claimed.",
+    "partition": "provided"
+  },
+  "complete": true,
+  "scope_cwes": [
+    "CWE-89",
+    "CWE-78"
+  ],
+  "files": {
+    "vulnerabilities/sqli/source/low.php": "652bb44d14a9d81c9245f05ed8440beecf7977e982e00d3ddb916126a72e85bf",
+    "vulnerabilities/sqli/source/impossible.php": "f4dcc92946933a31b0e93362a184ff776da9736036e99bec79f119cc2128aa8c",
+    "vulnerabilities/exec/source/low.php": "399a0d5dd28436a952a5bb0d14390eb421e57ab2e7add68813b6ce283cc70f28",
+    "vulnerabilities/exec/source/impossible.php": "26b294a69538ae5de36b8669fdaef85022814bfaa253f7678b2ac5fa295ab543"
+  },
+  "cases": [
+    {
+      "id": "vulnerabilities/sqli/source/low.php:11",
+      "kind": "code_only",
+      "cwe": "CWE-89",
+      "source": {
+        "file": "vulnerabilities/sqli/source/low.php",
+        "line": 11
+      }
+    },
+    {
+      "id": "vulnerabilities/sqli/source/low.php:34",
+      "kind": "code_only",
+      "cwe": "CWE-89",
+      "source": {
+        "file": "vulnerabilities/sqli/source/low.php",
+        "line": 34
+      }
+    },
+    {
+      "id": "vulnerabilities/sqli/source/impossible.php:16",
+      "kind": "decoy",
+      "cwe": "CWE-89",
+      "source": {
+        "file": "vulnerabilities/sqli/source/impossible.php",
+        "line": 16
+      }
+    },
+    {
+      "id": "vulnerabilities/sqli/source/impossible.php:34",
+      "kind": "decoy",
+      "cwe": "CWE-89",
+      "source": {
+        "file": "vulnerabilities/sqli/source/impossible.php",
+        "line": 34
+      }
+    },
+    {
+      "id": "vulnerabilities/exec/source/low.php:10",
+      "kind": "code_only",
+      "cwe": "CWE-78",
+      "source": {
+        "file": "vulnerabilities/exec/source/low.php",
+        "line": 10
+      }
+    },
+    {
+      "id": "vulnerabilities/exec/source/low.php:14",
+      "kind": "code_only",
+      "cwe": "CWE-78",
+      "source": {
+        "file": "vulnerabilities/exec/source/low.php",
+        "line": 14
+      }
+    },
+    {
+      "id": "vulnerabilities/exec/source/impossible.php:22",
+      "kind": "decoy",
+      "cwe": "CWE-78",
+      "source": {
+        "file": "vulnerabilities/exec/source/impossible.php",
+        "line": 22
+      }
+    },
+    {
+      "id": "vulnerabilities/exec/source/impossible.php:26",
+      "kind": "decoy",
+      "cwe": "CWE-78",
+      "source": {
+        "file": "vulnerabilities/exec/source/impossible.php",
+        "line": 26
+      }
+    }
+  ]
+}

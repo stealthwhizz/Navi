@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { api } from '@/lib/api';
+import { api, setAccessToken } from '@/lib/api';
 import { when } from '@/lib/format';
 import type { Scan } from '@/lib/types';
 import { useApi } from '@/lib/useApi';
@@ -28,7 +28,6 @@ const NAV: { href: string; label: string; icon: IconName; match: (p: string) => 
   { href: '/', label: 'Dashboard', icon: 'dashboard', match: (p) => p === '/' },
   { href: '/issues/', label: 'Issues', icon: 'list', match: (p) => p.startsWith('/issue') },
   { href: '/routes/', label: 'Route map', icon: 'route', match: (p) => p.startsWith('/routes') },
-  { href: '/suppressed/', label: 'Suppressed', icon: 'shield', match: (p) => p.startsWith('/suppressed') },
   { href: '/scans/', label: 'Scan history', icon: 'history', match: (p) => p.startsWith('/scans') },
 ];
 
@@ -47,7 +46,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const wanted = params.get('scan');
-  const loaded = useApi(`scans:${wanted ?? ''}`, api.scans);
+  const [authVersion, setAuthVersion] = useState(0);
+  const [key, setKey] = useState('');
+  const loaded = useApi(`scans:${wanted ?? ''}:${authVersion}`, api.scans);
   const [fresh, setFresh] = useState<Record<string, Scan>>({});
 
   const scans = (loaded.data ?? []).map((x) => fresh[x.id] ?? x);
@@ -104,6 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
         )}
         <div className={s.foot}>
+          <details className={ui.disclosure}><summary>Workspace access key</summary><form onSubmit={(event) => {event.preventDefault(); setAccessToken(key); setAuthVersion(v => v + 1); setKey('');}}><label className="sr-only" htmlFor="workspace-key">Access key</label><input id="workspace-key" className={ui.control} type="password" autoComplete="off" value={key} onChange={e => setKey(e.target.value)} /><button className={ui.btn}>Unlock</button></form></details>
           <Link className={ui.btn} href={{ pathname: '/', query: { ...query, new: '1' } }}><Icon name="plus" />New scan</Link>
         </div>
       </aside>

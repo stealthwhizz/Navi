@@ -1,0 +1,29 @@
+{
+  "allowed_methods": ["GET"],
+  "limits": {"max_seconds": 300},
+  "max_requests": 250,
+  "timeout": 4,
+  "interval": 0.05,
+  "discovery": {
+    "enabled": true,
+    "paths": ["/"],
+    "prefixes": ["/"],
+    "max_pages": 20,
+    "max_candidates": 30
+  },
+  "requests": {
+    "GET /api/catalog": {"query": {"sku": "book"}}
+  },
+  "runtime_inputs": [
+    {"route": "/api/catalog", "method": "GET", "parameter": "sku", "location": "query"}
+  ],
+  "ai": {
+    "enabled": false,
+    "provider": "groq",
+    "model": "openai/gpt-oss-20b",
+    "workflow": "correlation",
+    "max_requests": 5,
+    "max_prompt_tokens": 4000,
+    "max_completion_tokens": 2000
+  }
+}

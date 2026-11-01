@@ -11,7 +11,7 @@ import type { Route } from '@/lib/types';
 import { useApi } from '@/lib/useApi';
 
 const PROVENANCE: Record<Route['provenance'], string> = {
-  laravel: 'Laravel route file', filesystem: 'File path', front_controller: 'Front controller dispatch', fuzzy: 'Matched by name', unresolved: 'Unresolved',
+  native: 'Native source map', unresolved: 'Unresolved',
 };
 const FILTERS = { all: 'All', unmapped: 'Without a handler', issues: 'With issues' } as const;
 type Filter = keyof typeof FILTERS;

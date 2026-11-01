@@ -21,11 +21,10 @@ const FIX_FIRST = 6;
 
 function IssueMix({ scan }: { scan: Scan }) {
   const c = scan.counts;
-  const parts: { key: IssueStatus | 'suppressed'; label: string; n: number; seg: string; href: object }[] = [
+  const parts: { key: IssueStatus; label: string; n: number; seg: string; href: object }[] = [
     { key: 'confirmed', label: STATUS_LABEL.confirmed, n: c.confirmed, seg: s.segConfirmed, href: { pathname: '/issues/', query: { scan: scan.id, status: 'confirmed' } } },
     { key: 'code_only', label: STATUS_LABEL.code_only, n: c.code_only, seg: s.segCode, href: { pathname: '/issues/', query: { scan: scan.id, status: 'code_only' } } },
     { key: 'runtime_only', label: STATUS_LABEL.runtime_only, n: c.runtime_only, seg: s.segRuntime, href: { pathname: '/issues/', query: { scan: scan.id, status: 'runtime_only' } } },
-    { key: 'suppressed', label: 'Suppressed as safe', n: c.suppressed, seg: s.segSuppressed, href: { pathname: '/suppressed/', query: { scan: scan.id } } },
   ];
   const total = parts.reduce((sum, p) => sum + p.n, 0);
   return (
@@ -118,7 +117,7 @@ export default function DashboardPage() {
   const form = (
     <section ref={formRef} id="new-scan" className={cx(ui.panel, s.formPanel, s.full)} aria-labelledby="new-scan-title">
       <h2 id="new-scan-title" className="h3">{scan ? 'New scan' : 'Run your first scan'}</h2>
-      <p className="meta">Navi reads the PHP source, tests the running app, and links findings that describe the same bug.</p>
+      <p className="meta">Code analysis, runtime validation, and AI correlation. Each finding includes the reasoning behind it.</p>
       <ScanForm previous={scan} open />
     </section>
   );
@@ -134,7 +133,7 @@ export default function DashboardPage() {
           <p className="meta"><span className="mono">{scan.source_root}</span> tested against <span className="mono">{scan.target_origin}</span></p>
         </div>
         <div className={s.actions}>
-          {scan.state === 'completed' && <a className={cx(ui.btn, ui.quiet)} href={api.reportUrl(scan.id)} download><Icon name="download" />Download report</a>}
+          {scan.state === 'completed' && <a className={cx(ui.btn, ui.quiet)} href={api.reportUrl(scan.id)} onClick={(event) => {event.preventDefault(); void api.downloadReport(scan.id).catch(error => window.alert(error.message));}} download><Icon name="download" />Download report</a>}
           <Link className={cx(ui.btn, ui.quiet)} href={{ pathname: '/issues/', query: { scan: scan.id } }}><Icon name="list" />All issues</Link>
         </div>
       </div>

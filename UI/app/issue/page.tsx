@@ -43,15 +43,25 @@ export default function IssuePage() {
           <dl className={s.whereGrid}>
             <div><dt>Endpoint</dt><dd className="mono">{issue.dast ? `${issue.dast.method} ${issue.dast.url}` : issue.route ? `${issue.route.method} ${issue.route.path}` : 'Not mapped to a route'}</dd></div>
             <div><dt>Parameter</dt><dd className="mono">{issue.dast?.parameter ?? (issue.sast ? issue.sast.source.expr : 'None')}</dd></div>
-            <div><dt>Payload that proved it</dt><dd className="mono">{issue.dast?.payload ?? 'Not tested at runtime'}</dd></div>
+            <div><dt>Test payload</dt><dd className="mono wrap-any">{issue.dast?.payload ?? 'No payload recorded'}</dd></div>
             <div><dt>Code to change</dt><dd className="mono">{issue.sast ? loc(issue.sast.file, issue.sast.highlight_line) : issue.location ? loc(issue.location.file, issue.location.line) : 'No source location found'}</dd></div>
             <div><dt>Fingerprint</dt><dd className="mono">{issue.fingerprint}</dd></div>
-            <div><dt>Seen</dt><dd>First {when(issue.first_seen)}, last {when(issue.last_seen)}</dd></div>
+            <div><dt>This scan</dt><dd>{when(issue.last_seen)} · {issue.signals_combined} signals · {issue.evidence_count} observations</dd></div>
           </dl>
         </section>
         <section className={ui.panel} aria-labelledby="why">
-          <h2 id="why" className={cx('h3', ui.panelHead)}>Why this status</h2>
-          <CorrelationChain issue={issue} />
+          <h2 id="why" className={cx('h3', ui.panelHead)}>Reasoning</h2>
+          <p className="prose">{issue.reasoning.native}</p>
+          <h3 className="h4">AI analysis</h3>
+          {issue.reasoning.ai
+            ? <><p className="prose">{issue.reasoning.ai}</p><p className="meta">{issue.reasoning.ai_provider} · {issue.reasoning.ai_model} · Evidence-based advice</p></>
+            : <p className="meta">{issue.reasoning.ai_reason ?? 'No AI analysis is available for this finding.'}</p>}
+          <details open={issue.status === 'confirmed'}><summary>Why these findings were linked</summary><CorrelationChain issue={issue} /></details>
+        </section>
+        <section className={ui.panel} aria-labelledby="fix">
+          <h2 id="fix" className={cx('h3', ui.panelHead)}>Suggested fix</h2>
+          <p className="prose">{issue.fix ?? 'Review the recorded evidence and source flow to determine the appropriate fix.'}</p>
+          <p className="meta">{issue.risk_basis}</p>
         </section>
         <div className={s.grid}>
           <CodeEvidence issue={issue} />

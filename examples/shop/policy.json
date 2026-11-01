@@ -1,0 +1,25 @@
+{
+  "build": {"path": "/__navi__/build", "field": "source_digest"},
+  "requests": {
+    "GET /products": {"query": {"id": "1"}},
+    "GET /greet": {"query": {"name": "visitor"}},
+    "GET /download": {"query": {"file": "welcome.txt"}},
+    "GET /leave": {"query": {"next": "/"}}
+  },
+  "traversal_fixtures": [
+    {"route": "/download", "parameter": "file", "location": "query", "payload": "../private/probe.txt", "marker": "NAVI-PRIVATE-TRAVERSAL-FIXTURE-9d7b6a"}
+  ],
+  "lab": {"comparisons": [{"route": "/orders/<int:order_id>", "protected_route": "/safe/orders/<int:order_id>"}]},
+  "authorization": {
+    "identity_path": "/whoami",
+    "identity_field": "user",
+    "identities": {"alice": {"headers": {"X-Test-User": "alice"}}, "bob": {"headers": {"X-Test-User": "bob"}}},
+    "resources": [
+      {"route": "/orders/<int:order_id>", "parameter": "order_id", "value": "1", "allowed": ["alice"], "json_match": {"id": 1, "private_note": "ALICE-PRIVATE-ORDER-7c8d"}},
+      {"route": "/orders/<int:order_id>", "parameter": "order_id", "value": "2", "allowed": ["bob"], "json_match": {"id": 2, "private_note": "BOB-PRIVATE-ORDER-4e5f"}},
+      {"route": "/safe/orders/<int:order_id>", "parameter": "order_id", "value": "1", "allowed": ["alice"], "json_match": {"id": 1, "private_note": "ALICE-PRIVATE-ORDER-7c8d"}},
+      {"route": "/safe/orders/<int:order_id>", "parameter": "order_id", "value": "2", "allowed": ["bob"], "json_match": {"id": 2, "private_note": "BOB-PRIVATE-ORDER-4e5f"}},
+      {"route": "/shared/orders/<int:order_id>", "parameter": "order_id", "value": "3", "allowed": ["alice", "bob"], "json_match": {"id": 3, "private_note": "DELIBERATELY-SHARED-ORDER"}}
+    ]
+  }
+}

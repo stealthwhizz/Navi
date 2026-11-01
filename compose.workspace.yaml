@@ -1,0 +1,52 @@
+# Self-hosted workspace for an existing application. No vulnerable demo is started.
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-navi}
+      POSTGRES_USER: ${POSTGRES_USER:-navi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a PostgreSQL password (URL-safe or use an encoded DSN)}
+    volumes:
+      - workspace-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  navi:
+    build: .
+    command: ["python", "-m", "uvicorn", "navi.api:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
+    init: true
+    ports:
+      - "127.0.0.1:${NAVI_PORT:-8080}:8080"
+    environment:
+      NAVI_SOURCE: /workspace/source
+      NAVI_TARGET: ${NAVI_TARGET:?Set the application target URL reachable from this container}
+      NAVI_CONFIG: /workspace/scan.json
+      NAVI_OUTPUT: /app/artifacts
+      NAVI_PROJECT_KEY: ${NAVI_PROJECT_KEY:?Set a stable project identifier}
+      NAVI_API_TOKEN: ${NAVI_API_TOKEN:?Set a random workspace access key of at least 32 characters}
+      NAVI_ALLOWED_HOSTS: ${NAVI_ALLOWED_HOSTS:-}
+      NAVI_AI: ${NAVI_AI:-0}
+      NAVI_AI_MODEL: ${NAVI_AI_MODEL:-openai/gpt-oss-20b}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NAVI_TRACE_KEY: ${NAVI_TRACE_KEY:-}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-navi}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-navi}
+    volumes:
+      - ${NAVI_SOURCE_DIR:?Set the absolute source directory}:/workspace/source:ro
+      - ${NAVI_SCAN_CONFIG:?Set the absolute scan JSON path}:/workspace/scan.json:ro
+      - workspace-reports:/app/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+volumes:
+  workspace-postgres:
+  workspace-reports:

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "dataset": {"name": "Navi shop fixture", "provenance": "Manually enumerated examples/shop/app.py operations and protected counterparts; not the organiser application.", "partition": "local"},
+  "complete": true,
+  "cases": [
+    {"id": "sql-products", "kind": "paired", "cwe": "CWE-89", "source": {"file": "app.py", "line": 45}, "runtime": {"route": "/products", "method": "GET", "parameter": "id", "location": "query"}},
+    {"id": "xss-greeting", "kind": "paired", "cwe": "CWE-79", "source": {"file": "app.py", "line": 53}, "runtime": {"route": "/greet", "method": "GET", "parameter": "name", "location": "query"}},
+    {"id": "file-download", "kind": "paired", "cwe": "CWE-22", "source": {"file": "app.py", "line": 59}, "runtime": {"route": "/download", "method": "GET", "parameter": "file", "location": "query"}},
+    {"id": "redirect-leave", "kind": "paired", "cwe": "CWE-601", "source": {"file": "app.py", "line": 65}, "runtime": {"route": "/leave", "method": "GET", "parameter": "next", "location": "query"}},
+    {"id": "literal-secret", "kind": "code_only", "cwe": "CWE-798", "source": {"file": "app.py", "line": 15}},
+    {"id": "orders-policy", "kind": "runtime_only", "cwe": "CWE-639", "runtime": {"route": "/orders/<int:order_id>", "method": "GET", "parameter": "order_id", "location": "path"}},
+    {"id": "safe-sql", "kind": "decoy", "cwe": "CWE-89", "source": {"file": "app.py", "line": 81}, "runtime": {"route": "/safe/products", "method": "GET", "parameter": "id", "location": "query"}},
+    {"id": "safe-html", "kind": "decoy", "cwe": "CWE-79", "source": {"file": "app.py", "line": 89}, "runtime": {"route": "/safe/greet", "method": "GET", "parameter": "name", "location": "query"}},
+    {"id": "safe-file", "kind": "decoy", "cwe": "CWE-22", "source": {"file": "app.py", "line": 95}, "runtime": {"route": "/safe/download", "method": "GET", "parameter": "file", "location": "query"}},
+    {"id": "fixed-redirect", "kind": "decoy", "cwe": "CWE-601", "source": {"file": "app.py", "line": 101}},
+    {"id": "safe-order", "kind": "decoy", "cwe": "CWE-639", "runtime": {"route": "/safe/orders/<int:order_id>", "method": "GET", "parameter": "order_id", "location": "path"}},
+    {"id": "shared-order", "kind": "decoy", "cwe": "CWE-639", "runtime": {"route": "/shared/orders/<int:order_id>", "method": "GET", "parameter": "order_id", "location": "path"}}
+  ]
+}

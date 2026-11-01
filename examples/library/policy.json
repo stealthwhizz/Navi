@@ -1,0 +1,12 @@
+{
+  "build": {"path": "/__navi__/build"},
+  "allowed_methods": ["GET", "POST"],
+  "requests": {
+    "GET /v2/search": {"query": {"reference": "BK1"}},
+    "POST /v2/preview": {"form": {"caption": "Hello"}},
+    "GET /v2/document": {"query": {"document": "readme.txt"}}
+  },
+  "traversal_fixtures": [
+    {"route": "/v2/document", "parameter": "document", "payload": "../private/marker.txt", "marker": "NAVI-LIBRARY-PRIVATE-MARKER-a21fe9"}
+  ]
+}

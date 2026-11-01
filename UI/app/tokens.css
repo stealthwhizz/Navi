@@ -43,7 +43,10 @@
   --code-bg: rgb(2 7 10 / 0.85);
   --confirmed-wash: rgb(252 115 77 / 0.1);
 
-  /* type: faces are self-hosted by next/font in app/layout.tsx */
+  /* Offline font stacks; no build-time or browser font downloads. */
+  --face-display: "Instrument Serif";
+  --face-ui: "Atkinson Hyperlegible Next";
+  --face-code: "Atkinson Hyperlegible Mono";
   --font-display: var(--face-display), Georgia, serif;
   --font-ui: var(--face-ui), system-ui, sans-serif;
   --font-code: var(--face-code), ui-monospace, monospace;

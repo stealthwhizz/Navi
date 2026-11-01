@@ -1,0 +1,26 @@
+# Required CWEs and variation tests
+
+Navi implements bounded source rules for **CWE-89, CWE-79, CWE-78, CWE-22, CWE-601, and CWE-798**, plus configured runtime object-authorization checks for CWE-639. The matrix distinguishes implemented variants, protected controls, and remaining coverage limits.
+
+This is an enumerated coverage contract, not a claim to detect every possible implementation of a CWE. Unknown control flow and unavailable runtime prerequisites remain visible. A negative probe result means “not reproduced by these tests,” not “secure.”
+
+| CWE | Static variants and controls | Runtime variations | Remaining boundaries |
+| --- | --- | --- | --- |
+| 89 · SQL injection | Python DB-API; PHP mysqli, PDO-style query/exec/prepare; interpolation, concatenation, helper flow, branches; bound parameters and numeric casts as controls; escaping an unquoted numeric expression is not accepted as safe | Repeated true/false conditions in quoted and numeric contexts; query, form, JSON/path where mapped, cookie, and configured session inputs; HTML with reflected input and rotating form tokens; stable 404 false results; parameterized and reflection-only controls | No time-only/out-of-band oracle, general second-order SQL, or complete ORM modeling. Dynamic SQL outside the supported source model can still be tested through discovery/configured inputs |
+| 79 · XSS | Flask responses; PHP echo/print/interpolation and configured response fragments; HTML escaping, numeric output, unquoted attributes, disabled quote encoding, and JavaScript context controls | SVG event/script payloads; single/double attribute, textarea and select breakouts; inline DOM URL-to-output execution; configured stored write → independent read → cleanup. Actual Chromium execution is required; escaped output and CSP are controls | Requires a working browser. Same-origin script loading is opt-in; no complete JavaScript/CSS parser or storage-to-output SAST path. Stored findings remain Runtime only |
+| 78 · Command injection | Python os/subprocess shell calls; PHP execution functions/backticks; concatenation and helpers; fixed argv arrays, numeric guards and quoted fixed-command arguments as controls. Quoted executable selection and interpreter code remain candidates | Semicolon, quote breakout, pipe, newline, AND/OR chaining; two random octal-encoded markers, plus non-command decoding controls; independent positive and protected PHP fixture execution | POSIX returned-output proof only. No blind/out-of-band execution proof or universal argument-injection modeling |
+| 22 · Path traversal | Python reads/send_file; PHP reads, include and require; exact source-derived includes and helper flows; constant files and terminating finite allowlists as controls | Known private marker; relative paths, configured filter-bypass paths and local absolute/file paths; repeat confirmation; baseline-marker and missing-fixture controls | Requires an explicitly supplied disposable fixture. No arbitrary sensitive-file extraction, archive-write traversal or general platform-specific path normalization coverage |
+| 601 · Open redirect | Flask redirect and PHP Location construction, case-insensitive header names, fixed local path and constant destinations as controls | Absolute URLs, scheme-relative URLs, and an observed local seed path on an external origin; arbitrary unique destination must appear in Location; redirects are never followed | No general JavaScript/meta-refresh redirect analysis or exhaustive URL parser differences |
+| 798 · Hard-coded secrets | Named literal candidates in Python and PHP variables/array assignments/define, including short default passwords; actual tokenization excludes PHP comments; environment values and placeholders as controls; values redacted | **Code only**. Credentials are not tried against services | Heuristic names/literals. Key/secret names other than password/passwd require at least 12 characters. Arbitrary config formats and encoded/constructed credentials are not comprehensively detected |
+| 639 · Object authorization (additional) | No generic SAST policy inference | Verified identities, permitted-object controls, forbidden-object requests, expected protected JSON fields and repeat observations | Requires explicit business access policy and known object references; HTTP 200 alone is not proof |
+
+## Reproduce checks
+
+```sh
+python -m pytest -ra --junitxml=artifacts/test-results.xml
+```
+
+
+`tests/test_finding_contract.py` additionally exercises all seven input locations, three SQL quote contexts and seven shell separator contexts, plus wrong-link guards and stable repeat-scan IDs. Tests are also in `tests/test_varieties.py`, `tests/test_applications.py`, `tests/test_php.py`, `tests/test_static.py`, `tests/test_runtime.py`, `tests/test_browser.py`, and the existing transport/correlation/regression suites. Reports include `coverage.cwe_matrix`, per-input `checks`, per-probe evidence, and optional discovered pages/inputs. Declared support and observed test outcomes are separate.
+
+Full-application and unseen benchmark accuracy requires separately reviewed applications and answer keys. Local fixtures and the small external-source sample do not establish those scores. Reachability-aware SCA is not implemented.

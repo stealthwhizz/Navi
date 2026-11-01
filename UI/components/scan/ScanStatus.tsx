@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BUDGET_MS, PHASE_LABEL, clock, elapsedMs, isActive, when } from '@/lib/format';
+import { PHASE_LABEL, clock, elapsedMs, isActive, when } from '@/lib/format';
+import {api} from '@/lib/api';
 import type { Scan } from '@/lib/types';
 import { Notice, ScanStateLabel, ui } from '../ui';
 import s from './scan.module.css';
 
 export function ScanStatus({ scan, pollError }: { scan: Scan; pollError: string | null }) {
   const active = isActive(scan);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const [, tick] = useState(0);
   useEffect(() => {
     if (!active) return;
@@ -16,13 +19,14 @@ export function ScanStatus({ scan, pollError }: { scan: Scan; pollError: string 
   }, [active]);
 
   const ms = elapsedMs(scan);
-  const over = ms > BUDGET_MS;
+
   return (
     <>
       <div className={s.line}>
         <ScanStateLabel scan={scan} />
+        {active && <button className={ui.btn} disabled={cancelling} onClick={() => {setCancelling(true); void api.cancelScan(scan.id).catch(error => {setCancelError(error.message); setCancelling(false);});}}>{cancelling ? 'Stopping…' : 'Stop scan'}</button>}
         {scan.state === 'running' && scan.phase && <span>{PHASE_LABEL[scan.phase]}</span>}
-        {scan.started_at && <span className={over ? 'warning-text' : undefined}>{clock(ms)} of {clock(BUDGET_MS)} budget{over && ', over budget'}</span>}
+        {scan.started_at && <span>{clock(ms)} elapsed</span>}
         {scan.state === 'running' && scan.progress && (
           <label className={s.progress}>
             <span className="sr-only">Progress</span>
@@ -39,6 +43,7 @@ export function ScanStatus({ scan, pollError }: { scan: Scan; pollError: string 
       {scan.state === 'failed' && (
         <Notice kind="error">{scan.error ? `The scan failed: ${scan.error}` : 'The scan failed without an error message. Check the API logs, then start a new scan.'}</Notice>
       )}
+      {cancelError && <Notice kind="error">{cancelError}</Notice>}
       {pollError && <Notice kind="warning">Lost contact with the API: {pollError} Retrying every 2 seconds.</Notice>}
     </>
   );

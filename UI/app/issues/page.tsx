@@ -60,7 +60,7 @@ export default function IssuesPage() {
           <h1>Issues</h1>
           <p className="meta">One issue per real bug, confirmed first, then by risk. Scan from {when(scan.created_at)}.</p>
         </div>
-        {scan.state === 'completed' && <a className={cx(ui.btn, ui.quiet)} href={api.reportUrl(scan.id)} download><Icon name="download" />Download report</a>}
+        {scan.state === 'completed' && <a className={cx(ui.btn, ui.quiet)} href={api.reportUrl(scan.id)} onClick={(event) => {event.preventDefault(); void api.downloadReport(scan.id).catch(error => window.alert(error.message));}} download><Icon name="download" />Download report</a>}
       </div>
       <div className="stack">
         {(isActive(scan) || live.pollError) && (

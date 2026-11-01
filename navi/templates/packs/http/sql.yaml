@@ -1,0 +1,20 @@
+# Navi-authored proof driver; not an upstream Nuclei template.
+# The navi-verifier extension selects repeated native verification.
+# SPDX-License-Identifier: MIT
+id: navi-proof-sql
+info:
+  name: Navi sql proof
+  author: Navi
+  severity: high
+  classification:
+    cwe-id: CWE-89
+  metadata:
+    navi-verifier: sql
+http:
+- method: GET
+  path:
+  - '{{BaseURL}}'
+  matchers:
+  - type: word
+    words:
+    - navi_native_proof_extension_required

@@ -29,9 +29,16 @@ export function CorrelationChain({ issue }: { issue: Issue }) {
             </span>
           </li>
         ))}
-        <li className={c.accepted ? undefined : s.open}><span className={cx(s.node, s.status)}>{STATUS_LABEL[issue.status]}</span></li>
+        <li className={c.accepted ? undefined : s.open}><span className={cx(s.node, s.status)}>{c.source_link?.status ?? STATUS_LABEL[issue.status]}</span></li>
       </ol>
       <p className={cx('prose', s.rationale)}>{c.rationale}</p>
+      {c.evidence_graph?.source_flows.map((flow, index) => <details key={`${flow.operation_id}:${index}`}>
+        <summary>Candidate {flow.operation_id}: {flow.complete ? 'modeled value flow' : 'incomplete value flow'}</summary>
+        <ul>{flow.nodes.map((node) => <li key={node.id}>
+          {node.kind.replaceAll('_', ' ')}: {node.label ?? `${node.method ?? ''} ${node.route ?? ''} ${node.parameter ?? ''}`}
+          {node.file ? ` (${node.file}:${node.line})` : ''}
+        </li>)}</ul>
+      </details>)}
     </>
   );
 }

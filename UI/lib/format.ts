@@ -1,13 +1,12 @@
 import type { IssueStatus, Scan, Severity } from './types';
 
 export const STATUS_LABEL: Record<IssueStatus, string> = { confirmed: 'Confirmed', code_only: 'Code only', runtime_only: 'Runtime only' };
-export const CWE_NAME: Record<number, string> = { 89: 'SQL injection', 79: 'Cross-site scripting', 78: 'OS command injection', 22: 'Path traversal', 601: 'Open redirect', 798: 'Hard-coded credentials' };
+export const CWE_NAME: Record<number, string> = { 89: 'SQL injection', 79: 'Cross-site scripting', 78: 'OS command injection', 22: 'Path traversal', 601: 'Open redirect', 798: 'Hard-coded credentials', 639: 'Broken object authorization' };
 export const SEVERITY: Record<Severity, { label: string; segments: number }> = {
   critical: { label: 'Critical', segments: 4 }, high: { label: 'High', segments: 3 }, medium: { label: 'Medium', segments: 2 },
   low: { label: 'Low', segments: 1 }, informational: { label: 'Informational', segments: 0 },
 };
-export const PHASE_LABEL = { routes: 'Mapping routes', sast: 'Analysing source', dast: 'Testing the running app', correlate: 'Linking findings' } as const;
-export const BUDGET_MS = 15 * 60 * 1000; // PRD: good < 15 min, great < 5 min
+export const PHASE_LABEL = { sast: 'Analysing source', dast: 'Testing the running app', correlate: 'AI correlation' } as const;
 
 export const isActive = (scan: Scan) => scan.state === 'queued' || scan.state === 'running';
 

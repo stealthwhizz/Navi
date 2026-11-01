@@ -9,7 +9,7 @@ import s from './pipeline.module.css';
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 const EASE_IN_OUT = [0.77, 0, 0.175, 1] as const;
-const EDGES: [StageId, StageId][] = [['routes', 'sast'], ['routes', 'dast'], ['sast', 'correlate'], ['dast', 'correlate'], ['correlate', 'dedupe'], ['dedupe', 'report']];
+const EDGES: [StageId, StageId][] = [['sast', 'correlate'], ['dast', 'correlate']];
 const MAX_PARTICLES = 5; // per lane; the count shown in the hub is exact, the dots are a visual sample
 const converged = new Set<string>(); // scans whose convergence already played in this browser session
 

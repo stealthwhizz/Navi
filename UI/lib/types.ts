@@ -1,7 +1,7 @@
-// Mirrors docs/03-Architecture.md §4 "UI response shapes". Change both together.
+// Read-only UI projections in navi/ui.py; native reports retain the complete evidence.
 
 export type ScanState = 'queued' | 'running' | 'completed' | 'failed';
-export type ScanPhase = 'routes' | 'sast' | 'dast' | 'correlate';
+export type ScanPhase = 'sast' | 'dast' | 'correlate';
 export type IssueStatus = 'confirmed' | 'code_only' | 'runtime_only';
 export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'informational';
 export type CheckResult = 'pass' | 'fail' | 'unknown';
@@ -29,11 +29,15 @@ export interface Scan {
   phase: ScanPhase | null;
   progress: { done: number; total: number } | null;
   error: string | null;
-  counts: { confirmed: number; code_only: number; runtime_only: number; suppressed: number };
+  counts: { confirmed: number; code_only: number; runtime_only: number };
   coverage: Coverage | null;
+  ai: {status: string; reviewed: number; requests: number};
 }
 
+export interface Reasoning {native: string; ai: string | null; ai_status: string; ai_reason?: string | null; ai_provider?: string; ai_model?: string}
+
 export interface IssueSummary {
+  reasoning: Reasoning;
   id: string;
   fingerprint: string;
   status: IssueStatus;
@@ -54,7 +58,7 @@ export interface SastEvidence {
   highlight_line: number;
   source: { expr: string; type: string; location: string };
   sink: { name: string; type: string; location: string };
-  path: { label: string; location: string; resolved: boolean }[]; // ordered, source to sink inclusive
+  path: { label: string; location: string; resolved: boolean | null }[]; // ordered, source to sink inclusive
   sanitizers: { name: string; location: string; effective: boolean; reason: string }[];
 }
 
@@ -63,20 +67,45 @@ export interface DastEvidence {
   method: string;
   url: string;
   parameter: string | null;
+  location: string | null;
   payload: string | null;
   request: string;
-  response: { status: number; excerpt: string; truncated: boolean };
+  response: { status: number; excerpt: string; truncated: boolean; headers: Record<string, string> };
   evidence: string | null;
   oracle: string;
+  observations: RuntimeObservation[];
+}
+
+export interface RuntimeObservation {
+  evidence_index: number;
+  label: string;
+  url: string;
+  method: string;
+  parameter: string | null;
+  location: string | null;
+  payload: string | null;
+  request: Record<string, unknown>;
+  response: DastEvidence['response'];
+  browser: Record<string, unknown> | null;
+  execution_proof: Record<string, unknown> | null;
+  policy: Record<string, unknown> | null;
+  variant: string | null;
 }
 
 export interface Correlation {
+  source_link?: {status: string; operation_id: string | null; missing_evidence: string[]} | null;
+  evidence_graph?: {source_flows: {operation_id: string; complete: boolean; nodes: {id: string; kind: string; file?: string; line?: number; label?: string; route?: string; method?: string; parameter?: string}[]}[]} | null;
   accepted: boolean;
   rationale: string;
   checks: { name: string; result: CheckResult; detail: string }[];
 }
 
 export interface Issue extends IssueSummary {
+  fix: string | null;
+  priority: string | null;
+  risk_basis: string | null;
+  evidence_count: number;
+  signals_combined: number;
   scan_id: string;
   first_seen: string;
   last_seen: string;
@@ -91,19 +120,8 @@ export interface Route {
   declared_at: string | null;
   handler: { name: string; file: string; line_start: number; line_end: number } | null;
   params: string[];
-  provenance: 'laravel' | 'filesystem' | 'front_controller' | 'fuzzy' | 'unresolved';
+  provenance: 'native' | 'unresolved';
   confidence: 'high' | 'medium' | 'low';
   tested: boolean;
   issue_count: number;
-}
-
-export interface Suppressed {
-  id: string;
-  source: 'sast' | 'dast';
-  cwe: number;
-  title: string;
-  file: string;
-  line: number;
-  sanitizer: string;
-  reason: string;
 }
